@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Adding staff scenario</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+        }
+
+        h2 {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h3 {
+            color: #0044cc;
+            font-size: 20px;
+            margin-top: 30px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-size: 16px;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            width: 500px;
+            flex-shrink: 0;
+        }
+
+        select, input[type="number"] {
+            font-size: 16px;
+            padding: 5px;
+            margin-top: 5px;
+            width: 150px;
+        }
+
+        button {
+            margin-top: 30px;
+            padding: 10px 25px;
+            font-size: 16px;
+            background-color: #337aff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2255cc;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #2255cc;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* 양쪽 레이아웃 컨테이너 */
+        .flex-wrapper {
+            display: flex;
+            justify-content: center;   /* 좌측 기준 정렬 */
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 30px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* 왼쪽: 입력 폼 */
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* 내부 요소를 가운데 정렬 */
+        }
+
+        /* 오른쪽: Change Matrix */
+        .change-matrix-wrapper {
+            width: 50%;
+            max-width: 600px;
+            margin-left: 100px; /* 오른쪽으로 더 밀고 싶다면 값을 늘려주세요 */
+        }
+
+        /* 테이블 스타일 */
+        .change-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .change-matrix th, .change-matrix td {
+            border: 1px solid #999;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* 상단 텍스트만 있는 셀 */
+        .change-matrix .header {
+            font-weight: bold;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        /* 분류 헤더 (Type 등) */
+        .change-matrix .header2 {
+            font-weight: bold;
+            background-color: #e9ecef;
+        }
+
+        /* 회색 음영 셀 */
+        .change-matrix .shaded {
+            background-color: #d0d0d0;
+        }
+
+        /* 굵은 테두리 구분선 */
+        .thick-border-right {
+            border-right: 5px solid black !important;
+        }
+
+        .thick-border-left {
+            border-left: 5px solid black !important;
+        }
+
+        /* 제목에 쓰인 검정 텍스트 */
+        .another {
+            color: black;
+        }
+        .button-row {
+            display: flex;
+            justify-content: center; /* 가운데 정렬 */
+            gap: 15px; /* 버튼 간격 */
+            margin-top: 20px;
+        }
+
+        .run-btn {
+            padding: 10px 25px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .run-btn:hover { background-color: #0056b3; }
+
+        .stack-btn {
+            padding: 10px 25px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .stack-btn:hover { background-color: #1e7e34; }
+        #stackForm {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h2>👥➕ Adding staff Scenario</h2>
+
+    <div class="flex-wrapper">
+        <!-- 시프트 설정 폼 -->
+        <div class="form-container">
+            <form method="POST" action="{{ url_for('scenario.adding_staff_compare') }}">
+                <!-- Doctor Shift 설정 -->
+                <h3>👨‍⚕️ Doctor Shift Addition</h3>
+                <div id="doctor_shift_additions"></div>
+
+                <!-- Nurse Shift 설정 -->
+                <h3>👩‍⚕️ Nurse Shift Addition</h3>
+                <div id="nurse_shift_additions"></div>
+                <div class="button-row">
+                    <!-- Run Simulation 버튼 -->
+                    <button type="submit" class="run-btn">▶️ Run Simulation</button>
+
+                    <!-- Add to Stack 버튼 -->
+                    <button type="button" class="stack-btn" onclick="submitStack()">➕ Add to Stack</button>
+                </div>
+                <a href="{{ url_for('scenario.scenario_map') }}">← Back to Scenario Map</a>
+            </form>
+        </div>
+
+        <!-- Change Matrix 영역 -->
+        <div class="change-matrix-wrapper">
+            <h3 class="another">Change Matrix for ‘Adding Staff’</h3>
+            <table class="change-matrix">
+                <tr>
+                    <th class="header" colspan="2">Input side</th>
+                    <th class="header" colspan="3">Model side</th>
+                    <th rowspan="1" style="border: none;"></th>
+                </tr>
+                <tr>
+                    <td>Activities included</td>
+                    <td>Sequence flow</td>
+                    <td class="thick-border-left">Activities included</td>
+                    <td>Activity duration</td>
+                    <td>Transition time</td>
+                    <td rowspan="4" class="header2">Type</td>
+                    <td>Activity</td>
+                    
+                </tr>
+                <tr>
+                    <td>Number of entities</td>
+                    <td>Entity arrivals</td>
+                    <td class="thick-border-left">Number of resources</td>
+                    <td>Assignment</td>
+                    <td>Schedule</td>
+                    <td>Resource (Space)</td>
+                </tr>
+                <tr>
+                    <td>Entity attributes</td>
+                    <td>Entity profile</td>
+                    <td class="shaded thick-border-left">Number of resources</td>
+                    <td class="shaded">Assignment</td>
+                    <td class="shaded">Schedule</td>
+                    <td>Resource (Human)</td>
+                </tr>
+                <tr>
+                    <td>Entity configuration</td>
+                    <td>Entity ordering</td>
+                    <td class="thick-border-left">Number of resources</td>
+                    <td>Assignment</td>
+                    <td>Schedule</td>
+                    <td>Resource (Equipment)</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <form id="stackForm" method="POST" action="{{ url_for('scenario.add_to_stack') }}">
+        <input type="hidden" name="scenario_id" value="adding_staff">
+        
+    </form>
+    <script>
+        const currentStaff = {
+            doctor: { shift_1: 34, shift_2: 30},
+            nurse: { shift_1: 3, shift_2: 7, shift_3: 3 }
+        };
+        function createInputs(role, shiftData) {
+            const container = document.getElementById(`${role}_shift_additions`);
+            let index = 0;
+            for (const shift in shiftData) {
+                const base = shiftData[shift];
+                const max = Math.floor(base * 1.5);
+
+                container.innerHTML += `
+                    <label>
+                        ${shift.charAt(0).toUpperCase() + shift.slice(1)}
+                        (Current: ${base}, Max: ${max}):
+                    </label>
+                    <input type="number" name="${role}_shift_${index}" min="${base}" max="${max}" value="${base}">
+                    <br><br>
+                `;
+                index += 1
+            }
+        }
+
+        createInputs("doctor", currentStaff.doctor);
+        createInputs("nurse", currentStaff.nurse);
+
+        function submitStack() {
+            const stackForm = document.getElementById('stackForm');
+
+            // 이전에 추가된 hidden input 제거
+            stackForm.querySelectorAll('input[name^="doctor_shift_"], input[name^="nurse_shift_"]').forEach(el => el.remove());
+
+            // 현재 입력값 읽어서 hidden input 생성
+            const doctorInputs = document.querySelectorAll('input[name^="doctor_shift_"]');
+            doctorInputs.forEach(input => {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = input.name; // doctor_shift_0, doctor_shift_1 ...
+                hidden.value = input.value;
+                stackForm.appendChild(hidden);
+            });
+
+            const nurseInputs = document.querySelectorAll('input[name^="nurse_shift_"]');
+            nurseInputs.forEach(input => {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = input.name; // nurse_shift_0, nurse_shift_1 ...
+                hidden.value = input.value;
+                stackForm.appendChild(hidden);
+            });
+
+            // 최종 전송
+            stackForm.submit();
+        }
+    </script>
+</body>
+</html>

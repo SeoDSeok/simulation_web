@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>⚡ Reducing Lab Times / Boarding Times</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        background-color: #f8f9fa;
+    }
+    h1 { color: #333; }
+    .wrapper {
+        display: flex;
+        flex-direction: column; /* 위아래로 쌓기 */
+        align-items: center;    /* 수평 가운데 정렬 */
+        padding: 40px;
+    }
+    form {
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+      width: 500px;
+      margin-bottom: 30px;
+      text-align: left;
+    }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    input[type="number"] {
+      width: 100%;
+      padding: 6px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      padding: 10px 25px;
+      border: none;
+      border-radius: 5px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    button:hover { background-color: #004c9a; }
+    .change-matrix-wrapper {
+        width: 90%;
+        max-width: 800px;
+        margin-left: 30px; /* 오른쪽으로 더 밀고 싶다면 값을 늘려주세요 */
+    }
+
+    /* 테이블 스타일 */
+    .change-matrix {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+
+    .change-matrix th, .change-matrix td {
+        border: 1px solid #999;
+        padding: 20px;
+        text-align: center;
+    }
+
+    /* 상단 텍스트만 있는 셀 */
+    .change-matrix .header {
+        font-weight: bold;
+        border-top: none;
+        border-left: none;
+        border-right: none;
+    }
+
+    /* 분류 헤더 (Type 등) */
+    .change-matrix .header2 {
+        font-weight: bold;
+        background-color: #e9ecef;
+    }
+
+    /* 회색 음영 셀 */
+    .change-matrix .shaded {
+        background-color: #d0d0d0;
+    }
+
+    /* 굵은 테두리 구분선 */
+    .thick-border-right {
+        border-right: 5px solid black !important;
+    }
+
+    .thick-border-left {
+        border-left: 5px solid black !important;
+    }
+
+    /* 제목에 쓰인 검정 텍스트 */
+    .another {
+        color: black;
+    }
+    .button-row {
+        display: flex;
+        justify-content: center; /* 가운데 정렬 */
+        gap: 15px; /* 버튼 간격 */
+        margin-top: 20px;
+    }
+
+    .run-btn {
+        padding: 10px 25px;
+        font-size: 16px;
+        background-color: #007BFF;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .run-btn:hover { background-color: #0056b3; }
+
+    .stack-btn {
+        padding: 10px 25px;
+        font-size: 16px;
+        background-color: #28a745;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .stack-btn:hover { background-color: #1e7e34; }
+    #stackForm {
+        display: none;
+    }
+  </style>
+</head>
+<body>
+    <div class="wrapper">
+      <h1>⚡ Reducing Lab Times / Boarding Times</h1>
+  
+      <form method="post" action="{{ url_for('scenario.submit_reduce_lab_boarding') }}">
+        <!-- 폼 내용 그대로 -->
+        <label for="lab_reduce_ratio">
+          Lab Time Reduction Ratio (%)<br>
+          <small>ex: 20 → Lab 관련 활동 시간을 20% 감소</small>
+        </label>
+        <input type="number" id="lab_reduce_ratio" name="lab_reduce_ratio" min="0" max="100" value="0">
+  
+        <label for="boarding_reduce_ratio">
+          Boarding Time Reduction Ratio (%)<br>
+          <small>ex: 30 → 병상 대기 시간을 30% 감소</small>
+        </label>
+        <input type="number" id="boarding_reduce_ratio" name="boarding_reduce_ratio" min="0" max="100" value="0">
+  
+        <div class="button-row">
+            <!-- Run Simulation 버튼 -->
+            <button type="submit" class="run-btn">▶️ Run Simulation</button>
+
+            <!-- Add to Stack 버튼 -->
+            <button type="button" class="stack-btn" onclick="submitStack()">➕ Add to Stack</button>
+        </div>
+      </form>
+  
+      <a href="{{ url_for('scenario.scenario_map') }}">← Back to Scenario Map</a>
+  
+      <div class="change-matrix-wrapper">
+        <h3 class="another">Change Matrix for ‘Reducing Lab Times / Boarding Times’</h3>
+        <table class="change-matrix">
+            <tr>
+                <th class="header" colspan="2">Input side</th>
+                <th class="header" colspan="3">Model side</th>
+                <th rowspan="1" style="border: none;"></th>
+            </tr>
+            <tr>
+                <td>Activities included</td>
+                <td>Sequence flow</td>
+                <td class="thick-border-left">Activities included</td>
+                <td class="shaded">Activity duration</td>
+                <td class="shaded">Transition time</td>
+                <td rowspan="4" class="header2">Type</td>
+                <td>Activity</td>
+                
+            </tr>
+            <tr>
+                <td>Number of entities</td>
+                <td>Entity arrivals</td>
+                <td class="thick-border-left">Number of resources</td>
+                <td>Assignment</td>
+                <td>Schedule</td>
+                <td>Resource (Space)</td>
+            </tr>
+            <tr>
+                <td>Entity attributes</td>
+                <td>Entity profile</td>
+                <td class="thick-border-left">Number of resources</td>
+                <td>Assignment</td>
+                <td>Schedule</td>
+                <td>Resource (Human)</td>
+            </tr>
+            <tr>
+                <td>Entity configuration</td>
+                <td>Entity ordering</td>
+                <td class="thick-border-left">Number of resources</td>
+                <td>Assignment</td>
+                <td>Schedule</td>
+                <td>Resource (Equipment)</td>
+            </tr>
+        </table>
+      </div>
+    </div>
+    <form id="stackForm" method="POST" action="{{ url_for('scenario.add_to_stack') }}">
+        <input type="hidden" name="scenario_id" value="reduce_time">
+    </form>
+    <script>
+        function submitStack() {
+            const stackForm = document.getElementById('stackForm');
+
+            // 기존 hidden input 중 scenario_id 제외하고 모두 제거 (중복 방지)
+            Array.from(stackForm.querySelectorAll('input')).forEach(input => {
+                if (input.name !== 'scenario_id') input.remove();
+            });
+
+            // Lab Time Reduction 값
+            const labValue = document.getElementById('lab_reduce_ratio').value;
+            const labInput = document.createElement('input');
+            labInput.type = 'hidden';
+            labInput.name = 'lab_reduce_ratio';
+            labInput.value = labValue;
+            stackForm.appendChild(labInput);
+
+            // Boarding Time Reduction 값
+            const boardingValue = document.getElementById('boarding_reduce_ratio').value;
+            const boardingInput = document.createElement('input');
+            boardingInput.type = 'hidden';
+            boardingInput.name = 'boarding_reduce_ratio';
+            boardingInput.value = boardingValue;
+            stackForm.appendChild(boardingInput);
+
+            // stackForm 전송
+            stackForm.submit();
+        }
+    </script>
+  </body>
+</html>

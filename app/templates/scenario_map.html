@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Scenario Selection Map</title>
+  <style>
+    body {
+      background-color: #eaf2f8;
+    }
+    h2 {
+      text-align: center;
+      color:#1c65b2
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: 150px repeat(3, 1fr);
+      grid-template-rows: 50px repeat(11, auto);
+    }
+
+    .empty {
+      grid-row: 1;
+      grid-column: 1;
+    }
+
+    .header {
+      background: #d3e4f1;
+      text-align: center;
+      font-weight: bold;
+      padding: 10px;
+    }
+
+    .row-label {
+      background: #eaf2f8;
+      text-align: center;
+      font-weight: bold;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scenario-box {
+      background-color: #f0f8ff;
+      border: 1px solid #ccc;
+      padding: 5px;
+    }
+
+    .scenario-button {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 10px;
+      background-color: #517397;
+      color: white;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      text-align: left;
+    }
+
+    .scenario-icon-wrapper {
+      display: flex;
+      flex-direction: column; /* 세로로 정렬 */
+      align-items: center;
+      gap: 2px; /* 이미지와 글자 사이 간격 */
+    }
+
+    .scenario-icon {
+      height: 20px;
+    }
+
+    .icon-label {
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .gradation-bar {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    .gradation-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(to bottom, #517397, #cce6ff);
+      border-radius: 8px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .label-top,
+    .label-middle,
+    .label-bottom {
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      text-align: center;
+      text-shadow: 0 0 2px #000;
+      width: 100%;
+      align-self: center;
+    }
+
+    .label-middle {
+      margin-top: auto;
+      margin-bottom: auto;
+    }
+
+    .label-bottom {
+      margin-bottom: 0;
+    }
+    .bottom-buttons {
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;  /* 가운데 정렬 */
+      gap: 20px;                /* 버튼 간 간격 */
+    }
+
+    .bottom-buttons button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #fff;
+    }
+
+    /* Run 버튼 스타일 */
+    .run-all-btn {
+      background-color: #007BFF;
+    }
+    .run-all-btn:hover {
+      background-color: #0056b3;
+    }
+
+    /* Clear 버튼 스타일 */
+    .clear-stack-btn {
+      background-color: #dc3545;
+    }
+    .clear-stack-btn:hover {
+      background-color: #a71d2a;
+    }
+  </style>
+</head>
+<body>
+  <h2>Scenario Selection Map</h2>
+  <div class="grid-container">
+
+    <!-- Column Headers -->
+    <div class="empty"></div>
+    <div class="header">Resource-related</div>
+    <div class="header">Process-related</div>
+    <div class="header">Environment-related</div>
+
+    <!-- Y축 Gradiation Bar -->
+    <div class="gradation-bar" style="grid-row: 2 / span 11; grid-column: 1;">
+      <div class="gradation-fill">
+        <div class="label-top">More changes</div>
+        <div class="label-middle">Neutral</div>
+        <div class="label-bottom">Less changes</div>
+      </div>
+    </div>
+    <!-- 삭제 -->
+    <!-- Row Labels -->
+     <!--
+    <div class="row-label" style="grid-row: 2 / span 3; grid-column: 1;">More changes</div>
+    <div class="row-label" style="grid-row: 5 / span 5; grid-column: 1;">Neutral</div>
+    <div class="row-label" style="grid-row: 10 / span 3; grid-column: 1;">Less changes</div>
+    -->
+    <!-- Scenario Buttons -->
+    {% for s in scenarios %}
+      {% set grid_row = 2 + (10 - s.position.row) %}
+      {% set grid_col = 2 + s.position.col %}
+      <div class="scenario-box"
+           data-row="{{ grid_row }}"
+           data-col="{{ grid_col }}">
+        <form method="POST" action="/simulate/run">
+          <button type="submit" class="scenario-button" name="scenario_id" value="{{ s.id }}">
+            <span class="scenario-label">{{ s.label }}</span>
+            {% if s.icon %}
+            <span class="scenario-icon-wrapper">
+              <img src="{{ url_for('static', filename='icons/clock_' + s.icon + '-.png') }}" class="scenario-icon">
+              <span class="icon-label">{{ s.icon }}</span>
+            </span>
+            {% endif %}
+          </button>
+        </form>
+      </div>
+    {% endfor %}
+
+  </div>
+  <div class="bottom-buttons">
+    <!-- Run 버튼 -->
+    <form method="get" action="{{ url_for('scenario.run_stack') }}">
+      <button type="submit" class="run-all-btn">▶ Run Simulation with All Scenarios</button>
+    </form>
+
+    <!-- Clear 버튼 -->
+    <form method="get" action="{{ url_for('scenario.clear_stack') }}">
+      <button type="submit" class="clear-stack-btn">🗑️ Clear Scenario Stack</button>
+    </form>
+  </div>
+
+  <script>
+    document.querySelectorAll('.scenario-box').forEach(el => {
+      el.style.gridRow = el.dataset.row;
+      el.style.gridColumn = el.dataset.col;
+    });
+  </script>
+</body>
+</html>

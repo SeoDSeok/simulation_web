@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>🛠 Varying Task Composition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f8f9fa;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            gap: 60px;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            width: 550px;
+            flex-shrink: 0;
+        }
+
+        .assignment-block {
+            margin-bottom: 18px;
+        }
+
+        .assignment-block label {
+            display: inline-block;
+            width: 300px;
+            font-weight: bold;
+        }
+
+        .role-select {
+            width: 220px;
+            padding: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .change-matrix-wrapper {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .change-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .change-matrix th, .change-matrix td {
+            border: 1px solid #999;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .change-matrix .header {
+            font-weight: bold;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        .change-matrix .header2 {
+            font-weight: bold;
+            background-color: #e9ecef;
+        }
+
+        .change-matrix .shaded {
+            background-color: #d0d0d0;
+        }
+
+        .thick-border-left {
+            border-left: 5px solid black !important;
+        }
+
+        .another {
+            color: black;
+        }
+        .button-row {
+            display: flex;
+            justify-content: center; /* 가운데 정렬 */
+            gap: 15px; /* 버튼 간격 */
+            margin-top: 20px;
+        }
+
+        .run-btn {
+            padding: 10px 25px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .run-btn:hover { background-color: #0056b3; }
+
+        .stack-btn {
+            padding: 10px 25px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .stack-btn:hover { background-color: #1e7e34; }
+        #stackForm {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛠 Varying Task Composition</h1>
+    <div class="container">
+        <form method="post" action="{{ url_for('scenario.submit_reassign_task') }}">
+            {% for activity in activities %}
+                <div class="assignment-block">
+                    <label for="{{ activity }}">{{ activity }}</label>
+
+                    {% set available_roles = role_map[activity] %}
+                    {% if (doctor_roles | select('in', available_roles) | list) and
+                          (nurse_roles | select('in', available_roles) | list) %}
+                        <!-- Doctor-Nurse 혼합 선택 가능 -->
+                        <select name="{{ activity }}" class="role-select">
+                            <option value="">-- Select Composition --</option>
+                            <option value="Doctor:1.0,Nurse:0.0">100% Doctor</option>
+                            <option value="Doctor:0.8,Nurse:0.2">80% Doctor / 20% Nurse</option>
+                            <option value="Doctor:0.5,Nurse:0.5">50% Doctor / 50% Nurse</option>
+                            <option value="Doctor:0.2,Nurse:0.8">20% Doctor / 80% Nurse</option>
+                            <option value="Doctor:0.0,Nurse:1.0">100% Nurse</option>
+                        </select>
+                    {% elif (doctor_roles | select('in', available_roles) | list) %}
+                        <select name="{{ activity }}" class="role-select">
+                            <option value="Doctor:1.0">100% Doctor Only</option>
+                        </select>
+                    {% elif (nurse_roles | select('in', available_roles) | list) %}
+                        <select name="{{ activity }}" class="role-select">
+                            <option value="Nurse:1.0">100% Nurse Only</option>
+                        </select>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <div class="button-row">
+                <!-- Run Simulation 버튼 -->
+                <button type="submit" class="run-btn">▶️ Run Simulation</button>
+
+                <!-- Add to Stack 버튼 -->
+                <button type="button" class="stack-btn" onclick="submitStack()">➕ Add to Stack</button>
+            </div>
+            <a href="{{ url_for('scenario.scenario_map') }}">← Back to Scenario Map</a>
+        </form>
+
+        <div class="change-matrix-wrapper">
+            <h3 class="another">Change Matrix for ‘Varying Task Composition’</h3>
+            <table class="change-matrix">
+                <tr>
+                    <th class="header" colspan="2">Input side</th>
+                    <th class="header" colspan="3">Model side</th>
+                    <th rowspan="1" style="border: none;"></th>
+                </tr>
+                <tr>
+                    <td>Activities included</td>
+                    <td>Sequence flow</td>
+                    <td class="thick-border-left">Activities included</td>
+                    <td>Activity duration</td>
+                    <td>Transition time</td>
+                    <td rowspan="4" class="header2">Type</td>
+                    <td>Activity</td>
+                </tr>
+                <tr>
+                    <td>Number of entities</td>
+                    <td>Entity arrivals</td>
+                    <td class="thick-border-left">Number of resources</td>
+                    <td>Assignment</td>
+                    <td>Schedule</td>
+                    <td>Resource (Space)</td>
+                </tr>
+                <tr>
+                    <td>Entity attributes</td>
+                    <td>Entity profile</td>
+                    <td class="thick-border-left">Number of resources</td>
+                    <td class="shaded">Assignment</td>
+                    <td class="shaded">Schedule</td>
+                    <td>Resource (Human)</td>
+                </tr>
+                <tr>
+                    <td>Entity configuration</td>
+                    <td>Entity ordering</td>
+                    <td class="thick-border-left">Number of resources</td>
+                    <td>Assignment</td>
+                    <td>Schedule</td>
+                    <td>Resource (Equipment)</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <form id="stackForm" method="POST" action="{{ url_for('scenario.add_to_stack') }}">
+        <input type="hidden" name="scenario_id" value="vary_task_comp">
+    </form>
+    <script>
+        function submitStack() {
+            const stackForm = document.getElementById('stackForm');
+
+            // 기존에 scenario_id 외에 붙어있던 hidden input들 제거
+            Array.from(stackForm.querySelectorAll('input'))
+                .forEach(input => {
+                    if (input.name !== 'scenario_id') input.remove();
+                });
+
+            // 현재 화면의 모든 select 값 읽기
+            document.querySelectorAll('form select.role-select').forEach(select => {
+                const activityName = select.name;
+                const selectedValue = select.value;
+                if (selectedValue && selectedValue.trim() !== "") {
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = activityName; // 예: "처방", "초진"
+                    hidden.value = selectedValue; // 예: "Doctor:0.8,Nurse:0.2"
+                    stackForm.appendChild(hidden);
+                }
+            });
+
+            // 폼 전송
+            stackForm.submit();
+        }
+    </script>
+</body>
+</html>

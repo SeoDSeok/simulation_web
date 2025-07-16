@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>➕ Adding New Activities</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            margin: 40px; 
+            background: #f8f9fa; 
+        }
+        form { 
+            background: #fff; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 0 10px 
+            rgba(0,0,0,0.1); 
+        }
+        h1 { 
+            color: #333; 
+            text-align: center;
+        }
+        input[type="text"], input[type="number"] { 
+            padding: 6px; 
+            margin: 4px 0; 
+        }
+        .variant-table { 
+            width:100%; 
+            border-collapse: collapse; 
+            margin-top:20px; 
+        }
+        .variant-table th, .variant-table td { 
+            border: 1px solid #ccc; 
+            padding: 6px; 
+            font-size: 14px; 
+        }
+        .variant-table th { 
+            background:#e9ecef; 
+        }
+        .filter-box {
+             margin:10px 0; 
+            }
+        button {
+            margin-top: 30px;
+            padding: 10px 25px;
+            font-size: 16px;
+            background-color: #337aff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover { 
+            background:#004c9a; 
+        }
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #2255cc;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+        .change-matrix-wrapper {
+            width: 100%;
+            max-width: 900px;
+            margin: 20px auto;
+            text-align: center;
+        }
+        .change-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin: 10px auto;
+        }
+        .change-matrix th, .change-matrix td {
+            border: 1px solid #999;
+            padding: 24px;
+            text-align: center;
+        }
+        .change-matrix .header {
+            font-weight: bold;
+            border-top: None;
+            border-left: None;
+            border-right: None;
+        }
+        .change-matrix .header2 {
+            font-weight: bold;
+            background-color: #e9ecef;
+        }
+        .change-matrix .shaded {
+            background-color: #d0d0d0;
+        }
+        .thick-border-right {
+        border-right: 5px solid black !important;
+        }
+        .thick-border-left {
+            border-left: 5px solid black !important;
+        }
+        .button-row {
+            display: flex;
+            justify-content: center; /* 가운데 정렬 */
+            gap: 15px; /* 버튼 간격 */
+            margin-top: 20px;
+        }
+
+        .run-btn {
+            padding: 10px 25px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .run-btn:hover { background-color: #0056b3; }
+
+        .stack-btn {
+            padding: 10px 25px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .stack-btn:hover { background-color: #1e7e34; }
+        #stackForm {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>➕ Add New Activity</h1>
+    <div class="change-matrix-wrapper">
+        <h3 class="another">Change Matrix for ‘Adding New Activity’</h3>
+        <table class="change-matrix">
+            <tr>
+                <th class="header" colspan="2">Input side</th>
+                <th class="header" colspan="3">Model side</th>
+                <th rowspan="1" style="border: none;"></th>
+            </tr>
+            <tr>
+                <td class="shaded">Activities included</td>
+                <td class="shaded">Sequence flow</td>
+                <td class="shaded thick-border-left">Activities included</td>
+                <td class="shaded">Activity duration</td>
+                <td class="shaded">Transition time</td>
+                <td rowspan="4" class="header2">Type</td>
+                <td>Activity</td>
+                
+            </tr>
+            <tr>
+                <td>Number of entities</td>
+                <td>Entity arrivals</td>
+                <td class="thick-border-left">Number of resources</td>
+                <td>Assignment</td>
+                <td>Schedule</td>
+                <td>Resource (Space)</td>
+            </tr>
+            <tr>
+                <td>Entity attributes</td>
+                <td>Entity profile</td>
+                <td class="shaded thick-border-left">Number of resources</td>
+                <td class="shaded">Assignment</td>
+                <td class="shaded">Schedule</td>
+                <td>Resource (Human)</td>
+            </tr>
+            <tr>
+                <td>Entity configuration</td>
+                <td>Entity ordering</td>
+                <td class="thick-border-left">Number of resources</td>
+                <td>Assignment</td>
+                <td>Schedule</td>
+                <td>Resource (Equipment)</td>
+            </tr>
+        </table>
+    </div>
+    <form method="post" action="{{ url_for('scenario.submit_add_activity') }}">
+        <input type="hidden" name="scenario_id" value="add_new_activity">
+        <label>New Activity Name:</label>
+        <input type="text" name="activity_name" required placeholder="Enter new activity name">
+
+        <div class="filter-box">
+            <label>Filter variants:</label>
+            <input type="text" id="filterInput" onkeyup="filterVariants()" placeholder="Type to filter…">
+        </div>
+
+        <table class="variant-table">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Variant (Activity Sequence)</th>
+                    <th>Insert Position</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for idx, variant in enumerate(variants) %}
+                <tr class="variant-row" data-variant="{{ variant }}">
+                    <td>
+                        <input type="checkbox" name="selected_variants" value="{{ idx }}">
+                    </td>
+                    <td>
+                        {% for act in variant %}
+                            <span style="padding:2px 6px; border:1px solid #aaa; border-radius:3px; margin-right:3px;">{{ loop.index0 }}:{{ act }}</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <input type="number" name="insert_pos_{{ idx }}" min="0" placeholder="(blank = append)">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="button-row">
+            <!-- Run Simulation 버튼 -->
+            <button type="submit" class="run-btn">▶️ Run Simulation</button>
+
+            <!-- Add to Stack 버튼 -->
+            <button type="button" class="stack-btn" onclick="submitStack()">➕ Add to Stack</button>
+        </div>
+    </form>
+    <form id="stackForm" method="POST" action="{{ url_for('scenario.add_to_stack') }}">
+        <input type="hidden" name="scenario_id" value="add_new_activity">
+        
+    </form>
+    <a href="{{ url_for('scenario.scenario_map') }}">← Back to Scenario Map</a>
+    <script>
+        function filterVariants() {
+            const filter = document.getElementById('filterInput').value.toLowerCase();
+            const rows = document.querySelectorAll('.variant-row');
+            rows.forEach(row => {
+                const text = row.dataset.variant.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+        function submitStack() {
+            // 1. 새로운 activity 이름 가져오기
+            const activityName = document.querySelector('input[name="activity_name"]').value;
+            document.getElementById('stack_activity').value = activityName;
+
+            // 2. 선택된 variants 가져오기
+            const selected = [];
+            document.querySelectorAll('input[name="selected_variants"]:checked').forEach(chk => {
+                selected.push(chk.value);
+            });
+
+            // 선택된 variant 인덱스들을 hidden input으로 추가
+            // (기존 hidden input을 지우고 새로 추가)
+            const stackForm = document.getElementById('stackForm');
+            // 이전에 추가된 hidden input들 제거
+            stackForm.querySelectorAll('input[name="selected_variants"]').forEach(n => n.remove());
+            selected.forEach(idx => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'selected_variants';
+                input.value = idx;
+                stackForm.appendChild(input);
+            });
+
+            // 이제 stackForm 전송
+            stackForm.submit();
+        }
+    </script>
+</body>
+</html>

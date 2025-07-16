@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scenario Comparison</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    table { border-collapse: collapse; width: 80%; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    th { background-color: #f2f2f2; }
+    h2 { color: #333; }
+
+    .button {
+      margin-top: 30px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Comparison: Applied scenario - {{ activity }}</h2>
+
+  <table>
+    <tr>
+      <th>Metric</th>
+      <th>Baseline</th>
+      <th>Modified</th>
+    </tr>
+    {% for label, base, mod in comparison_kpis %}
+    <tr>
+      <td>{{ label }}</td>
+      <td>{{ base }}</td>
+      <td>{{ mod }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <form action="{{ url_for('scenario.scenario_map') }}">
+    <button type="submit" class="button">Back to Scenario Map</button>
+  </form>
+
+<!--
+  <h1>📊 Scenario Comparison</h1>
+  <table border="1" style="border-collapse:collapse; width:100%;">
+    <tr>
+      <th>KPI</th>
+      {% for step_label, step_data in multi_results %}
+        <th>{{ step_label }}</th>
+      {% endfor %}
+    </tr>
+    {% if multi_results %}
+      {% set all_kpi_labels = multi_results[0][1].keys() %}
+      {% for kpi_label in all_kpi_labels %}
+        <tr>
+          <td>{{ kpi_label }}</td>
+          {% for step_label, step_data in multi_results %}
+            <td>{{ step_data.get(kpi_label, '') }}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    {% endif %}
+  </table>
+-->
+</body>
+</html>

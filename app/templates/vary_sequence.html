@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🔄 Varying Patient Sequence</title>
+  <style>
+    body {
+      font-family: Arial;
+      margin:40px;
+      background:#f8f9fa;
+      text-align:center;
+    }
+    form {
+      background:#fff;
+      display:inline-block;
+      padding:30px;
+      border-radius:8px;
+      box-shadow:0 0 10px rgba(0,0,0,0.1);
+      margin-bottom:30px;
+      text-align:left;
+    }
+    select, input[type=text] {
+      width:95%;
+      padding:6px;
+      margin-top:5px;
+      margin-bottom:10px;
+      border:1px solid #ccc;
+      border-radius:4px;
+    }
+    button {
+      background:#007BFF;
+      color:#fff;
+      padding:10px 25px;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+    }
+    button:hover {
+      background:#004c9a;
+    }
+    .variant-block {
+      border:1px solid #ddd;
+      border-radius:6px;
+      padding:15px;
+      margin-bottom:20px;
+      background:#f1f1f1;
+    }
+    a {
+      display:block;
+      margin-top:20px;
+    }
+    .change-matrix-wrapper {
+      width: 100%;
+      max-width: 900px;
+      margin: 20px auto; /* 가운데 정렬 */
+    }
+    .change-matrix {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    .change-matrix th, .change-matrix td {
+      border: 1px solid #999;
+      padding: 24px;
+      text-align: center;
+    }
+    .change-matrix .header {
+      font-weight: bold;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .change-matrix .header2 {
+      font-weight: bold;
+      background-color: #e9ecef;
+    }
+    .change-matrix .shaded {
+      background-color: #d0d0d0;
+    }
+    .thick-border-right {
+      border-right: 5px solid black !important;
+    }
+    .thick-border-left {
+      border-left: 5px solid black !important;
+    }
+    #new_order {
+        margin-bottom: 10px;
+    }
+    .button-row {
+        display: flex;
+        justify-content: center; /* 가운데 정렬 */
+        gap: 15px; /* 버튼 간격 */
+        margin-top: 20px;
+    }
+
+    .run-btn {
+        padding: 10px 25px;
+        font-size: 16px;
+        background-color: #007BFF;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .run-btn:hover { background-color: #0056b3; }
+
+    .stack-btn {
+        padding: 10px 25px;
+        font-size: 16px;
+        background-color: #28a745;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .stack-btn:hover { background-color: #1e7e34; }
+    #stackForm {
+        display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔄 Varying Patient Sequence</h1>
+
+  <!-- 1단계: 활동 선택 -->
+  <form method="post" action="{{ url_for('scenario.vary_sequence2') }}">
+    <label for="selected_activity">📌 Modify Variants Containing Activity:</label>
+    <select name="selected_activity" id="selected_activity">
+      {% for act in activities %}
+        <option value="{{ act }}" {% if selected_activity==act %}selected{% endif %}>{{ act }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Show Variants</button>
+  </form>
+
+  <!-- Change Matrix -->
+  <div class="change-matrix-wrapper">
+    <h3>Change Matrix for ‘Resequencing Activities’</h3>
+    <table class="change-matrix">
+      <tr>
+        <th class="header" colspan="2">Input side</th>
+        <th class="header" colspan="3">Model side</th>
+        <th rowspan="1" style="border: none;"></th>
+      </tr>
+      <tr>
+        <td>Activities included</td>
+        <td class="shaded">Sequence flow</td>
+        <td class="thick-border-left">Activities included</td>
+        <td>Activity duration</td>
+        <td class="shaded">Transition time</td>
+        <td rowspan="4" class="header2">Type</td>
+        <td>Activity</td>
+      </tr>
+      <tr>
+        <td>Number of entities</td>
+        <td>Entity arrivals</td>
+        <td class="thick-border-left">Number of resources</td>
+        <td>Assignment</td>
+        <td>Schedule</td>
+        <td>Resource (Space)</td>
+      </tr>
+      <tr>
+        <td>Entity attributes</td>
+        <td>Entity profile</td>
+        <td class="thick-border-left">Number of resources</td>
+        <td>Assignment</td>
+        <td>Schedule</td>
+        <td>Resource (Human)</td>
+      </tr>
+      <tr>
+        <td>Entity configuration</td>
+        <td>Entity ordering</td>
+        <td class="thick-border-left">Number of resources</td>
+        <td>Assignment</td>
+        <td>Schedule</td>
+        <td>Resource (Equipment)</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 2단계: Drag & Drop UI (선택 후에만 표시) -->
+  {% if variants %}
+  <h3>🧩 Reorder Activities by Drag & Drop</h3>
+  <form method="post" action="{{ url_for('scenario.submit_vary_sequence2') }}">
+    {% for v in variants %}
+      <div style="display:inline-block; margin:20px; vertical-align:top;">
+        <h4 style="text-align:center;">Variant #{{ loop.index }}</h4>
+        <ul id="drag-list-{{ loop.index0 }}" class="drag-list"
+            style="list-style:none;padding:0;margin:0 0 10px 0;background:#e9ecef;
+                  padding:10px;display:inline-block;text-align:left;border-radius:6px;">
+          {% for act in v.activities %}
+            <li draggable="true"
+                style="padding:8px;margin:4px 0;background:white;border:1px solid #ccc;
+                      cursor:grab;width:120px;text-align:center;">
+              {{ act }}
+            </li>
+          {% endfor %}
+        </ul>
+        <!-- hidden input: 각 variant 순서를 담음 -->
+        <input type="hidden" name="new_order_{{ loop.index0 }}" id="new_order_{{ loop.index0 }}">
+      </div>
+    {% endfor %}
+    <br style="clear:both;">
+    <div class="button-row">
+        <!-- Run Simulation 버튼 -->
+        <button type="submit" class="run-btn">▶️ Run Simulation</button>
+
+        <!-- Add to Stack 버튼 -->
+        <button type="button" class="stack-btn" onclick="submitStack()">➕ Add to Stack</button>
+    </div>
+  </form>
+  {% endif %}
+
+  <a href="{{ url_for('scenario.scenario_map') }}">← Back to Scenario Map</a>
+
+  <form id="stackForm" method="POST" action="{{ url_for('scenario.add_to_stack') }}">
+      <input type="hidden" name="scenario_id" value="resequence_activity">
+  </form>
+  <script>
+    // 모든 drag-list에 대해 drag & drop 기능을 추가
+    document.querySelectorAll('.drag-list').forEach((list) => {
+      let dragEl = null;
+
+      list.addEventListener('dragstart', (e) => {
+        dragEl = e.target;
+      });
+
+      list.addEventListener('dragover', (e) => {
+        e.preventDefault();
+      });
+
+      list.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (e.target.tagName === 'LI' && dragEl !== e.target) {
+          list.insertBefore(dragEl, e.target.nextSibling);
+        }
+      });
+    });
+
+    // form 제출 시 각 drag-list의 순서를 수집해 hidden input에 넣기
+    document.querySelector('form').addEventListener('submit', function() {
+      document.querySelectorAll('.drag-list').forEach((list, idx) => {
+        const order = Array.from(list.children).map(li => li.innerText.trim());
+        const hiddenInput = document.getElementById('new_order_' + idx);
+        hiddenInput.value = order.join(',');
+      });
+    });
+   function submitStack() {
+      const stackForm = document.getElementById('stackForm');
+
+      // 기존 hidden input 중 scenario_id 제외하고 모두 제거 (중복 방지)
+      Array.from(stackForm.querySelectorAll('input')).forEach(input => {
+        if (input.name !== 'scenario_id') input.remove();
+      });
+
+      // 각 drag-list의 순서를 수집
+      document.querySelectorAll('.drag-list').forEach((list, idx) => {
+        const order = Array.from(list.children).map(li => li.innerText.trim());
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'new_order_' + idx;
+        hiddenInput.value = order.join(',');
+        stackForm.appendChild(hiddenInput);
+      });
+
+      // 선택된 activity(첫 단계에서 선택한 값)도 전달
+      const selectedActivity = document.getElementById('selected_activity');
+      if (selectedActivity) {
+        const actInput = document.createElement('input');
+        actInput.type = 'hidden';
+        actInput.name = 'selected_activity';
+        actInput.value = selectedActivity.value;
+        stackForm.appendChild(actInput);
+      }
+
+      // 전송
+      stackForm.submit();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rostering Scenario</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f8f9fa;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            gap: 60px;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            width: 500px;
+            flex-shrink: 0;
+        }
+
+        .role-section {
+            margin-bottom: 25px;
+        }
+
+        .role-section h3 {
+            margin-bottom: 10px;
+            color: #0056b3;
+        }
+
+        .shift-input {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .shift-input label {
+            flex: 1;
+        }
+
+        .shift-input input {
+            flex: 1;
+            padding: 5px;
+            margin-left: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        input[type="submit"] {
+            background-color: #0056b3;
+            color: white;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #004095;
+        }
+
+        /* Change Matrix */
+        .change-matrix-wrapper {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .change-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .change-matrix th, .change-matrix td {
+            border: 1px solid #999;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .change-matrix .header {
+            font-weight: bold;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        .change-matrix .header2 {
+            font-weight: bold;
+            background-color: #e9ecef;
+        }
+
+        .change-matrix .shaded {
+            background-color: #d0d0d0;
+        }
+
+        .thick-border-right {
+            border-right: 5px solid black !important;
+        }
+
+        .thick-border-left {
+            border-left: 5px solid black !important;
+        }
+
+        .another {
+            color: black;
+        }
+
+        hr {
+            border: none;
+            border-top: 2px solid #bbb;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .button-row {
+            display: flex;
+            justify-content: center; /* 가운데 정렬 */
+            gap: 15px; /* 버튼 간격 */
+            margin-top: 20px;
+        }
+
+        .run-btn {
+            padding: 10px 25px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .run-btn:hover { background-color: #0056b3; }
+
+        .stack-btn {
+            padding: 10px 25px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .stack-btn:hover { background-color: #1e7e34; }
+        #stackForm {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🩺 Rostering Scenario - Shift Resource Allocation</h1>
+    <div class="container">
+        <form method="post" action="{{ url_for('scenario.submit_rostering') }}">
+            <h2>👨‍⚕️ Doctors</h2>
+            {% for role in roles if role in ['Intern', 'Resident', 'Specialist'] %}
+            <div class="role-section">
+                <h3>{{ role }}</h3>
+                {% for shift in ['shift_1', 'shift_2'] %}
+                <div class="shift-input">
+                    <label for="{{ role }}_{{ shift }}">{{ shift.replace("_", " ").capitalize() }}:</label>
+                    <input type="number" id="{{ role }}_{{ shift }}" name="{{ role }}_{{ shift }}" min="0" required>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <hr>
+
+            <h2>👩‍⚕️ Nurses</h2>
+            {% for role in roles if role in ['Junior', 'Senior'] %}
+            <div class="role-section">
+                <h3>{{ role }}</h3>
+                {% for shift in ['shift_1', 'shift_2', 'shift_3'] %}
+                <div class="shift-input">
+                    <label for="{{ role }}_{{ shift }}">{{ shift.replace("_", " ").capitalize() }}:</label>
+                    <input type="number" id="{{ role }}_{{ shift }}" name="{{ role }}_{{ shift }}" min="0" required>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            <div class="button-row">
+                <!-- Run Simulation 버튼 -->
+                <button type="submit" class="run-btn">▶️ Run Simulation</button>
+
+                <!-- Add to Stack 버튼 -->
+                <button type="button" class="stack-btn" onclick="submitStack()">➕ Add to Stack</button>
+            </div>
+
+            <a href="{{ url_for('scenario.scenario_map') }}" class="back-button">← Back to Scenario Map</a>
+        </form>
+
+        <div class="change-matrix-wrapper">
+            <h3 class="another">Change Matrix for ‘Rostering’</h3>
+            <table class="change-matrix">
+                <tr>
+                    <th class="header" colspan="2">Input side</th>
+                    <th class="header" colspan="3">Model side</th>
+                    <th rowspan="1" style="border: none;"></th>
+                </tr>
+                <tr>
+                    <td>Activities included</td>
+                    <td>Sequence flow</td>
+                    <td class="thick-border-left">Activities included</td>
+                    <td>Activity duration</td>
+                    <td>Transition time</td>
+                    <td rowspan="4" class="header2">Type</td>
+                    <td>Activity</td>
+                </tr>
+                <tr>
+                    <td>Number of entities</td>
+                    <td>Entity arrivals</td>
+                    <td class="thick-border-left">Number of resources</td>
+                    <td>Assignment</td>
+                    <td>Schedule</td>
+                    <td>Resource (Space)</td>
+                </tr>
+                <tr>
+                    <td>Entity attributes</td>
+                    <td>Entity profile</td>
+                    <td class="thick-border-left">Number of resources</td>
+                    <td class="shaded">Assignment</td>
+                    <td class="shaded">Schedule</td>
+                    <td>Resource (Human)</td>
+                </tr>
+                <tr>
+                    <td>Entity configuration</td>
+                    <td>Entity ordering</td>
+                    <td class="thick-border-left">Number of resources</td>
+                    <td>Assignment</td>
+                    <td>Schedule</td>
+                    <td>Resource (Equipment)</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <form id="stackForm" method="POST" action="{{ url_for('scenario.add_to_stack') }}">
+        <input type="hidden" name="scenario_id" value="rostering">
+        <input type="hidden" name="Intern_shift_1" id="stack_Intern_shift_1">
+        <input type="hidden" name="Intern_shift_2" id="stack_Intern_shift_2">
+        <input type="hidden" name="Resident_shift_1" id="stack_Resident_shift_1">
+        <input type="hidden" name="Resident_shift_2" id="stack_Resident_shift_2">
+        <input type="hidden" name="Specialist_shift_1" id="stack_Specialist_shift_1">
+        <input type="hidden" name="Specialist_shift_2" id="stack_Specialist_shift_2">
+        <!-- nurse roles -->
+        <input type="hidden" name="Junior_shift_1" id="stack_Junior_shift_1">
+        <input type="hidden" name="Junior_shift_2" id="stack_Junior_shift_2">
+        <input type="hidden" name="Junior_shift_3" id="stack_Junior_shift_3">
+        <input type="hidden" name="Senior_shift_1" id="stack_Senior_shift_1">
+        <input type="hidden" name="Senior_shift_2" id="stack_Senior_shift_2">
+        <input type="hidden" name="Senior_shift_3" id="stack_Senior_shift_3">
+    </form>
+    <script>
+        function submitStack() {
+            const roles = ['Intern','Resident','Specialist','Junior','Senior'];
+            const doctorShifts = ['shift_1','shift_2'];
+            const nurseShifts = ['shift_1','shift_2','shift_3'];
+
+            // doctor roles
+            ['Intern','Resident','Specialist'].forEach(role => {
+                doctorShifts.forEach(shift => {
+                    const inputId = `${role}_${shift}`;
+                    const hiddenId = `stack_${role}_${shift}`;
+                    const value = document.getElementById(inputId).value;
+                    document.getElementById(hiddenId).value = value;
+                });
+            });
+
+            // nurse roles
+            ['Junior','Senior'].forEach(role => {
+                nurseShifts.forEach(shift => {
+                    const inputId = `${role}_${shift}`;
+                    const hiddenId = `stack_${role}_${shift}`;
+                    const value = document.getElementById(inputId).value;
+                    document.getElementById(hiddenId).value = value;
+                });
+            });
+
+            // 전송
+            document.getElementById('stackForm').submit();
+        }
+    </script>
+</body>
+</html>

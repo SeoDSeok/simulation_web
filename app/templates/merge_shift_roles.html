@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>🌀 Merging Roles & Changing Shift Times</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f8f9fa;
+        }
+        h1 { color: #333; }
+        .container { display: flex; gap: 50px; }
+
+        form {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            width: 500px;
+            flex-shrink: 0;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section h3 {
+            margin-bottom: 10px;
+            color: #0056b3;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="time"], select {
+            width: 100%;
+            padding: 6px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #004c9a;
+        }
+
+        .change-matrix-wrapper {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .change-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .change-matrix th, .change-matrix td {
+            border: 1px solid #999;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .change-matrix .header {
+            font-weight: bold;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        .change-matrix .header2 {
+            font-weight: bold;
+            background-color: #e9ecef;
+        }
+
+        .change-matrix .shaded {
+            background-color: #d0d0d0;
+        }
+
+        .thick-border-left {
+            border-left: 5px solid black !important;
+        }
+
+        .another {
+            color: black;
+        }
+        .button-row {
+            display: flex;
+            justify-content: center; /* 가운데 정렬 */
+            gap: 15px; /* 버튼 간격 */
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .run-btn {
+            padding: 10px 25px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .run-btn:hover { background-color: #0056b3; }
+
+        .stack-btn {
+            padding: 10px 25px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .stack-btn:hover { background-color: #1e7e34; }
+        #stackForm {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌀 Merging Roles & Changing Shift Times</h1>
+    <div class="container">
+        <form method="post" action="{{ url_for('scenario.submit_merge_roles') }}">
+            
+            <!-- Shift section -->
+            <div class="section">
+                <!--
+                <h3>🕐 Modify Shift Hours</h3>
+
+                <strong>👨‍⚕️ Doctors (2 shifts)</strong><br>
+                <label for="doc_shift_1_start">Shift 1 Start:</label>
+                <select id="doc_shift_1_start" name="doc_shift_1_start">
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="doc_shift_1_end">Shift 1 End:</label>
+                <select id="doc_shift_1_end" name="doc_shift_1_end">
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+
+                <label for="doc_shift_2_start">Shift 2 Start:</label>
+                <select id="doc_shift_2_start" name="doc_shift_2_start">
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="doc_shift_2_end">Shift 2 End:</label>
+                <select id="doc_shift_2_end" name="doc_shift_2_end">
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+
+                <br><br>
+                <strong>👩‍⚕️ Nurses (3 shifts)</strong><br>
+                <label for="nurse_shift_1_start">Shift 1 Start:</label>
+                <select id="nurse_shift_1_start" name="nurse_shift_1_start">
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="nurse_shift_1_end">Shift 1 End:</label>
+                <select id="nurse_shift_1_end" name="nurse_shift_1_end">
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+
+                <label for="nurse_shift_2_start">Shift 2 Start:</label>
+                <select id="nurse_shift_2_start" name="nurse_shift_2_start">
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="nurse_shift_2_end">Shift 2 End:</label>
+                <select id="nurse_shift_2_end" name="nurse_shift_2_end">
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+
+                <label for="nurse_shift_3_start">Shift 3 Start:</label>
+                <select id="nurse_shift_3_start" name="nurse_shift_3_start">
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="nurse_shift_3_end">Shift 3 End:</label>
+                <select id="nurse_shift_3_end" name="nurse_shift_3_end">
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                -->
+                <strong>👨‍⚕️ Doctors (2 shifts)</strong><br>
+                <label for="doctor_shift_1_start">Shift 1 Start:</label>
+                <select id="doctor_shift_1_start" name="doctor_shift_1_start">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="doctor_shift_1_end">Shift 1 End:</label>
+                <select id="doctor_shift_1_end" name="doctor_shift_1_end">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+
+                <label for="doctor_shift_2_start">Shift 2 Start:</label>
+                <select id="doctor_shift_2_start" name="doctor_shift_2_start">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="doctor_shift_2_end">Shift 2 End:</label>
+                <select id="doctor_shift_2_end" name="doctor_shift_2_end">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+
+                <br><br>
+
+                <!-- Nurse shift inputs -->
+                <strong>👩‍⚕️ Nurses (3 shifts)</strong><br>
+                <label for="nurse_shift_1_start">Shift 1 Start:</label>
+                <select id="nurse_shift_1_start" name="nurse_shift_1_start">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="nurse_shift_1_end">Shift 1 End:</label>
+                <select id="nurse_shift_1_end" name="nurse_shift_1_end">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+
+                <label for="nurse_shift_2_start">Shift 2 Start:</label>
+                <select id="nurse_shift_2_start" name="nurse_shift_2_start">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="nurse_shift_2_end">Shift 2 End:</label>
+                <select id="nurse_shift_2_end" name="nurse_shift_2_end">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+
+                <label for="nurse_shift_3_start">Shift 3 Start:</label>
+                <select id="nurse_shift_3_start" name="nurse_shift_3_start">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="nurse_shift_3_end">Shift 3 End:</label>
+                <select id="nurse_shift_3_end" name="nurse_shift_3_end">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Role Merge -->
+            <div class="section">
+                <h3>👥 Merge Sub-Roles</h3>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="merge_doctor" name="merge_doctor" value="1.0">
+                    <label for="merge_doctor">Merge Intern + Resident → Junior Doctor</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="merge_nurse" name="merge_nurse" value="1.0">
+                    <label for="merge_nurse">Merge Junior + Senior → Nurse</label>
+                </div>
+            </div>
+
+            <div class="button-row">
+                <!-- Run Simulation 버튼 -->
+                <button type="submit" class="run-btn">▶️ Run Simulation</button>
+
+                <!-- Add to Stack 버튼 -->
+                <button type="button" class="stack-btn" onclick="submitStack()">➕ Add to Stack</button>
+            </div>
+            <a href="{{ url_for('scenario.scenario_map') }}">← Back to Scenario Map</a>
+        </form>
+
+        <div class="change-matrix-wrapper">
+            <h3 class="another">Change Matrix for ‘Merging Roles and Changing Shift Times’</h3>
+            <table class="change-matrix">
+                <tr>
+                    <th class="header" colspan="2">Input side</th>
+                    <th class="header" colspan="3">Model side</th>
+                    <th rowspan="1" style="border: none;"></th>
+                </tr>
+                <tr>
+                    <td>Activities included</td>
+                    <td>Sequence flow</td>
+                    <td class="thick-border-left">Activities included</td>
+                    <td>Activity duration</td>
+                    <td>Transition time</td>
+                    <td rowspan="4" class="header2">Type</td>
+                    <td>Activity</td>
+                </tr>
+                <tr>
+                    <td>Number of entities</td>
+                    <td>Entity arrivals</td>
+                    <td class="thick-border-left">Number of resources</td>
+                    <td>Assignment</td>
+                    <td>Schedule</td>
+                    <td>Resource (Space)</td>
+                </tr>
+                <tr>
+                    <td>Entity attributes</td>
+                    <td>Entity profile</td>
+                    <td class="thick-border-left">Number of resources</td>
+                    <td class="shaded">Assignment</td>
+                    <td class="shaded">Schedule</td>
+                    <td>Resource (Human)</td>
+                </tr>
+                <tr>
+                    <td>Entity configuration</td>
+                    <td>Entity ordering</td>
+                    <td class="thick-border-left">Number of resources</td>
+                    <td>Assignment</td>
+                    <td>Schedule</td>
+                    <td>Resource (Equipment)</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <form id="stackForm" method="POST" action="{{ url_for('scenario.add_to_stack') }}">
+        <input type="hidden" name="scenario_id" value="merg_role">
+    </form>
+    <script>
+        function submitStack() {
+            const stackForm = document.getElementById('stackForm');
+
+            // 기존 hidden input 정리 (scenario_id는 유지)
+            Array.from(stackForm.querySelectorAll('input')).forEach(input => {
+                if (input.name !== 'scenario_id') input.remove();
+            });
+
+            // --- 체크박스 상태 수집 ---
+            const mergeDoctor = document.getElementById('merge_doctor').checked ? '1' : '0';
+            const mergeNurse = document.getElementById('merge_nurse').checked ? '1' : '0';
+
+            let inputMergeDoctor = document.createElement('input');
+            inputMergeDoctor.type = 'hidden';
+            inputMergeDoctor.name = 'merge_doctor';
+            inputMergeDoctor.value = mergeDoctor;
+            stackForm.appendChild(inputMergeDoctor);
+
+            let inputMergeNurse = document.createElement('input');
+            inputMergeNurse.type = 'hidden';
+            inputMergeNurse.name = 'merge_nurse';
+            inputMergeNurse.value = mergeNurse;
+            stackForm.appendChild(inputMergeNurse);
+
+            // --- 시프트 시간 선택값 수집 ---
+            const shiftFields = [
+                'doctor_shift_1_start', 'doctor_shift_1_end',
+                'doctor_shift_2_start', 'doctor_shift_2_end',
+                'nurse_shift_1_start',  'nurse_shift_1_end',
+                'nurse_shift_2_start',  'nurse_shift_2_end',
+                'nurse_shift_3_start',  'nurse_shift_3_end'
+            ];
+
+            shiftFields.forEach(fieldId => {
+                const el = document.getElementById(fieldId);
+                if (el && el.value !== '') {
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = fieldId;
+                    hidden.value = el.value;
+                    stackForm.appendChild(hidden);
+                }
+            });
+
+            // 폼 전송
+            stackForm.submit();
+        }
+    </script>
+</body>
+</html>

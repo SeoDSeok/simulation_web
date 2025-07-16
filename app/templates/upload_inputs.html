@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Simulation Input</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 80px auto;
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #003366;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 20px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+
+        button {
+            margin-top: 30px;
+            width: 100%;
+            padding: 14px;
+            background-color: #003366;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #00509e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Upload data for simulation</h2>
+        <form action="{{ url_for('main.upload_inputs') }}" method="POST" enctype="multipart/form-data">
+            <label>Event Log (CSV):</label>
+            <input type="file" name="event_log" accept=".csv" required>
+
+            <label>Activity Frequency (CSV):</label>
+            <input type="file" name="activity_freq" accept=".csv" required>
+
+            <label>Event Duration (Pickle):</label>
+            <input type="file" name="event_duration" accept=".pickle" required>
+
+            <label>Activity Resource (Pickle):</label>
+            <input type="file" name="activity_resource" accept=".pickle" required>
+
+            <label>Transition Time (CSV):</label>
+            <input type="file" name="transition_time" accept=".csv" required>
+
+            <button type="submit">Run simulation</button>
+        </form>
+    </div>
+</body>
+</html>

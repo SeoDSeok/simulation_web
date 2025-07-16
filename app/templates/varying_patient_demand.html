@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📈 Varying Patient Demand</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background-color: #f8f9fa; text-align: center; }
+    form {
+      background-color: #fff;
+      display: inline-block;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #007BFF;
+      color: #fff;
+      padding: 10px 25px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover { background-color: #004c9a; }
+    .change-matrix-wrapper {
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .change-matrix {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+    .change-matrix th, .change-matrix td {
+        border: 1px solid #999;
+        padding: 24px;
+        text-align: center;
+    }
+    .change-matrix .header {
+        font-weight: bold;
+        border-top: None;
+        border-left: None;
+        border-right: None;
+    }
+    .change-matrix .header2 {
+        font-weight: bold;
+        background-color: #e9ecef;
+    }
+    .change-matrix .shaded {
+        background-color: #d0d0d0;
+    }
+    .thick-border-right {
+    border-right: 5px solid black !important;
+    }
+    .thick-border-left {
+        border-left: 5px solid black !important;
+    }
+    .button-row {
+        display: flex;
+        justify-content: center; /* 가운데 정렬 */
+        gap: 15px; /* 버튼 간격 */
+        margin-top: 20px;
+    }
+
+    .run-btn {
+        padding: 10px 25px;
+        font-size: 16px;
+        background-color: #007BFF;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .run-btn:hover { background-color: #0056b3; }
+
+    .stack-btn {
+        padding: 10px 25px;
+        font-size: 16px;
+        background-color: #28a745;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .stack-btn:hover { background-color: #1e7e34; }
+    #stackForm {
+        display: none;
+    }
+  </style>
+</head>
+<body>
+    <h1>📈 Varying Patient Demand</h1>
+    <form method="post" action="{{ url_for('scenario.submit_vary_demand') }}">
+        <label for="demand_multiplier">Demand Multiplier (%)</label><br>
+        <small>예: 150 → 환자 수와 도착 빈도를 150%로 증가</small><br>
+        <input type="number" id="demand_multiplier" name="demand_multiplier" min="10" max="300" value="100">
+        <div class="button-row">
+            <!-- Run Simulation 버튼 -->
+            <button type="submit" class="run-btn">▶️ Run Simulation</button>
+
+            <!-- Add to Stack 버튼 -->
+            <button type="button" class="stack-btn" onclick="submitStack()">➕ Add to Stack</button>
+        </div>
+    </form>
+    <br><br>
+    <a href="{{ url_for('scenario.scenario_map') }}">← Back to Scenario Map</a>
+    <div class="change-matrix-wrapper">
+        <h3>Change Matrix for ‘Varying Patient Demand’</h3>
+        <table class="change-matrix">
+            <tr>
+                <th class="header" colspan="2">Input side</th>
+                <th class="header" colspan="3">Model side</th>
+                <th rowspan="1" style="border: none;"></th>
+            </tr>
+            <tr>
+                <td>Activities included</td>
+                <td>Sequence flow</td>
+                <td class="thick-border-left">Activities included</td>
+                <td>Activity duration</td>
+                <td>Transition time</td>
+                <td rowspan="4" class="header2">Type</td>
+                <td>Activity</td>
+                
+            </tr>
+            <tr>
+                <td class="shaded">Number of entities</td>
+                <td class="shaded">Entity arrivals</td>
+                <td class="thick-border-left">Number of resources</td>
+                <td>Assignment</td>
+                <td>Schedule</td>
+                <td>Resource (Space)</td>
+            </tr>
+            <tr>
+                <td class="shaded">Entity attributes</td>
+                <td class="shaded">Entity profile</td>
+                <td class="thick-border-left">Number of resources</td>
+                <td class="shaded">Assignment</td>
+                <td>Schedule</td>
+                <td>Resource (Human)</td>
+            </tr>
+            <tr>
+                <td class="shaded">Entity configuration</td>
+                <td>Entity ordering</td>
+                <td class="thick-border-left">Number of resources</td>
+                <td>Assignment</td>
+                <td>Schedule</td>
+                <td>Resource (Equipment)</td>
+            </tr>
+        </table>
+    </div>
+    <form id="stackForm" method="POST" action="{{ url_for('scenario.add_to_stack') }}">
+        <input type="hidden" name="scenario_id" value="vary_patient_demand">
+    </form>
+    <script>
+        function submitStack() {
+            const stackForm = document.getElementById('stackForm');
+
+            // 기존 hidden input 중 scenario_id 제외 모두 제거
+            Array.from(stackForm.querySelectorAll('input')).forEach(input => {
+            if (input.name !== 'scenario_id') input.remove();
+            });
+
+            // demand_multiplier 값을 읽어서 hidden input 추가
+            const demandMultiplier = document.getElementById('demand_multiplier').value;
+            const demandInput = document.createElement('input');
+            demandInput.type = 'hidden';
+            demandInput.name = 'demand_multiplier';
+            demandInput.value = demandMultiplier;
+            stackForm.appendChild(demandInput);
+
+            // stackForm 전송
+            stackForm.submit();
+        }
+    </script>
+</body>
+</html>
