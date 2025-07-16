@@ -33,7 +33,11 @@ Results for running simulations without any options
 
 ### 3. Scenario Map Screen
 Changeable scenario screen extracted from taxonomy
-<img width="1908" height="864" alt="Image" src="https://github.com/user-attachments/assets/da3515e9-741e-4fd9-a401-28aba0248694" />
+<img width="1911" height="922" alt="Image" src="https://github.com/user-attachments/assets/60952ccf-c0a7-40d3-b005-4b484642c0d1" />
+- Run Simulation with All Scenarios :
+Use accumulated scenarios to conduct simulations
+- Clear Scenario Stack : 
+Remove all accumulated scenarios
 
 ### 4. Click the Scenario button
 ### 5. Option screen corresponding to the scenario
