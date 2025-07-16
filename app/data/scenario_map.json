@@ -1,0 +1,108 @@
+{
+  "scenarios": [
+    {
+      "id": "adding_staff",
+      "label": "Adding staff",
+      "category": "Resource-related",
+      "change_level": "Neutral",
+      "position": {"row": 7, "col": 0},
+      "icon": "T"
+    },
+    {
+      "id": "reallocating",
+      "label": "Reallocating based on staff type and shift",
+      "category": "Resource-related",
+      "change_level": "Neutral",
+      "position": {"row": 6, "col": 0},
+      "icon": "T"
+    },
+    {
+      "id": "rostering",
+      "label": "Rostering",
+      "category": "Resource-related",
+      "change_level": "Neutral",
+      "position": {"row": 5, "col": 0},
+      "icon": "T"
+    },
+    {
+      "id": "vary_the_assignment",
+      "label": "Varying the assignment of staff",
+      "category": "Resource-related",
+      "change_level": "Neutral",
+      "position": {"row": 4, "col": 0},
+      "icon": "TCQ"
+    },
+    {
+      "id": "vary_task_comp",
+      "label": "Varying task composition",
+      "category": "Resource-related",
+      "change_level": "Neutral",
+      "position": {"row": 3, "col": 0},
+      "icon": "T"
+    },
+    {
+      "id": "merg_role",
+      "label": "Merging roles and changing shift times",
+      "category": "Resource-related",
+      "change_level": "Less",
+      "position": {"row": 2, "col": 0},
+      "icon": "T"
+    },
+    {
+      "id": "add_new_activity",
+      "label": "Adding new activities",
+      "category": "Process-related",
+      "change_level": "More",
+      "position": {"row": 10, "col": 1},
+      "icon": "C"
+    },
+    {
+      "id": "remove_activity",
+      "label": "Removing activities",
+      "category": "Process-related",
+      "change_level": "More",
+      "position": {"row": 8, "col": 1},
+      "icon": "T"
+    },
+    {
+      "id": "reduce_time",
+      "label": "Reducing lab times / boarding times",
+      "category": "Process-related",
+      "change_level": "Neutral",
+      "position": {"row": 3, "col": 1},
+      "icon": "T"
+    },
+    {
+      "id": "resequence_activity",
+      "label": "Resequencing activities",
+      "category": "Process-related",
+      "change_level": "Less",
+      "position": {"row": 2, "col": 1},
+      "icon": "TF"
+    },
+    {
+      "id": "vary_patient_demand",
+      "label": "Varying patient demand",
+      "category": "Environment-related",
+      "change_level": "More",
+      "position": {"row": 9, "col": 2},
+      "icon": "TCQ"
+    },
+    {
+      "id": "vary_patient_sequences",
+      "label": "Varying patient sequences",
+      "category": "Environment-related",
+      "change_level": "Less",
+      "position": {"row": 1, "col": 2},
+      "icon": "T"
+    },
+    {
+      "id": "vary_queue_discipline",
+      "label": "Varying queue discipline",
+      "category": "Environment-related",
+      "change_level": "Less",
+      "position": {"row": 0, "col": 2},
+      "icon": "T"
+    }
+  ]
+}
