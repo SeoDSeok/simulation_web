@@ -1,6 +1,26 @@
 # simulation_web
 Simulation web page in hospital process
 
+## Installation
+
+1. Create and activate a Python virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+### Running
+
+To run the evaluation:
+
+```
+python run.py
+```
+
 ## Overall Framework
 <img width="645" height="581" alt="Image" src="https://github.com/user-attachments/assets/0d2c420e-aa70-4852-a5a4-c698a146bebc" />
 
