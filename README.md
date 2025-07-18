@@ -15,7 +15,7 @@ pip install -r requirements.txt
 ```
 ### Running
 
-To run the evaluation:
+To run the simulation web:
 
 ```
 python run.py
