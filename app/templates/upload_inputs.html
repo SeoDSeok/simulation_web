@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Upload Simulation Input</title>
@@ -63,23 +63,31 @@
     <div class="container">
         <h2>Upload data for simulation</h2>
         <form action="{{ url_for('main.upload_inputs') }}" method="POST" enctype="multipart/form-data">
+            <!-- 기존 파일들 -->
             <label>Event Log (CSV):</label>
             <input type="file" name="event_log" accept=".csv" required>
 
+            <label>Raw Parameter Data (CSV) [optional]:</label>
+            <input type="file" name="raw_param_data" accept=".csv">
+
+            <hr>
+            <p style="font-size:0.9em;color:#666;">※ When you upload Raw Parameter Data, the following four files are automatically generated.<br> If you don't upload it, please upload the 4 files below directly.</p>
+
             <label>Activity Frequency (CSV):</label>
-            <input type="file" name="activity_freq" accept=".csv" required>
+            <input type="file" name="activity_freq" accept=".csv">
 
             <label>Event Duration (Pickle):</label>
-            <input type="file" name="event_duration" accept=".pickle" required>
+            <input type="file" name="event_duration" accept=".pickle">
 
             <label>Activity Resource (Pickle):</label>
-            <input type="file" name="activity_resource" accept=".pickle" required>
+            <input type="file" name="activity_resource" accept=".pickle">
 
             <label>Transition Time (CSV):</label>
-            <input type="file" name="transition_time" accept=".csv" required>
+            <input type="file" name="transition_time" accept=".csv">
 
             <button type="submit">Run simulation</button>
         </form>
     </div>
+    
 </body>
 </html>
