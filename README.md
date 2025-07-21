@@ -25,8 +25,15 @@ python run.py
 <img width="645" height="581" alt="Image" src="https://github.com/user-attachments/assets/0d2c420e-aa70-4852-a5a4-c698a146bebc" />
 
 ### 1. Data Upload
+<img width="726" height="866" alt="Image" src="https://github.com/user-attachments/assets/4aab21b2-5133-4b18-8126-b568fe8b32ed" />
 - Event Log (CSV) :
 Log data for simulation
+- Raw Parameter Data (CSV) [optional] :
+Data for extracting parameters for simulation
+<br>
+When you upload Raw Parameter Data, the following four files are automatically generated.
+If you don't upload it, please upload the 4 files below directly.
+
 - Activity Frequency (CSV) :
 Each activity frequency data obtained from historical data (pdf by activity)
 - Event Duration (Pickle) :
