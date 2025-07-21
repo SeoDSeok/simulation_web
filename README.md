@@ -26,6 +26,7 @@ python run.py
 
 ### 1. Data Upload
 <img width="726" height="866" alt="Image" src="https://github.com/user-attachments/assets/4aab21b2-5133-4b18-8126-b568fe8b32ed" />
+
 - Event Log (CSV) :
 Log data for simulation
 - Raw Parameter Data (CSV) [optional] :
