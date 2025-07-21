@@ -38,13 +38,23 @@ Transition time when going from a specific activity to the next activity from hi
 
 ### 2. Default Simulation Results Screen
 Results for running simulations without any options
-- Number of Doctors
-- Number of Nurses
-- Number of Doctors in shift_1
-- Number of Doctors in shift_2
-- Number of Nurses in shift_1
-- Number of Nurses in shift_2
-- Number of Nurses in shift_3
+- Number of Intern
+- Number of Resident
+- Number of Specialist
+- Number of Junior Nurse
+- Number of Senior Nurse
+- Number of Intern in shift_1
+- Number of Intern in shift_2
+- Number of Resident in shift_1
+- Number of Resident in shift_2
+- Number of Specialist in shift_1
+- Number of Specialist in shift_2
+- Number of Junior Nurses in shift_1
+- Number of Junior Nurses in shift_2
+- Number of Junior Nurses in shift_3
+- Number of Senior Nurses in shift_1
+- Number of Senior Nurses in shift_2
+- Number of Senior Nurses in shift_3
 - Median Waiting Time (minutes)
 - Mean Waiting Time (minutes)
 - Case Duration (max)
