@@ -190,9 +190,7 @@ def upload_inputs():
             transition_time.save(transition_time_path)
 
         # 이후 시뮬레이션 엔진으로 넘기기
-        
-
-        return run_simulation()
+        return render_template('loading.html', next_url=url_for('main.run_simulation'))
 
     return render_template('upload_inputs.html')
 
