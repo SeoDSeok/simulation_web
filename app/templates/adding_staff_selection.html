@@ -181,14 +181,41 @@
     <div class="flex-wrapper">
         <!-- 시프트 설정 폼 -->
         <div class="form-container">
-            <form method="POST" action="{{ url_for('scenario.adding_staff_compare') }}">
-                <!-- Doctor Shift 설정 -->
-                <h3>👨‍⚕️ Doctor Shift Addition</h3>
-                <div id="doctor_shift_additions"></div>
+            <form method="POST" action="{{ url_for('scenario.submit_adding_staff') }}">
+                <!--
+                <input type="hidden" name="scenario_target" value="adding_staff_compare">
+                -->
+                <!-- Intern 설정 -->
+                <h3>👨‍⚕️ Intern Shift Addition</h3>
+                {% for key, options in intern_opts.items() %}
+                    <label>{{ key.replace('_',' ').title() }}</label>
+                    <input type="number" name="{{ key }}" min="{{ options[0] }}" max="{{ options[-1] }}" value="{{ options[0] }}">
+                {% endfor %}
+                <!-- Resident 설정 -->
+                <h3>👨‍⚕️ Resident Shift Addition</h3>
+                {% for key, options in resident_opts.items() %}
+                    <label>{{ key.replace('_',' ').title() }}</label>
+                    <input type="number" name="{{ key }}" min="{{ options[0] }}" max="{{ options[-1] }}" value="{{ options[0] }}">
+                {% endfor %}
+                <!-- Specialist 설정 -->
+                <h3>👨‍⚕️ Specialist Shift Addition</h3>
+                {% for key, options in specialist_opts.items() %}
+                    <label>{{ key.replace('_',' ').title() }}</label>
+                    <input type="number" name="{{ key }}" min="{{ options[0] }}" max="{{ options[-1] }}" value="{{ options[0] }}">
+                {% endfor %}
 
-                <!-- Nurse Shift 설정 -->
-                <h3>👩‍⚕️ Nurse Shift Addition</h3>
-                <div id="nurse_shift_additions"></div>
+                <!-- Junior Nurse Shift 설정 -->
+                <h3>👩‍⚕️ Junior Nurse Shift Addition</h3>
+                {% for key, options in junior_opts.items() %}
+                    <label>{{ key.replace('_',' ').title() }}</label>
+                    <input type="number" name="{{ key }}" min="{{ options[0] }}" max="{{ options[-1] }}" value="{{ options[0] }}">
+                {% endfor %}
+                <!-- Senior Nurse Shift 설정 -->
+                <h3>👩‍⚕️ Senior Nurse Shift Addition</h3>
+                {% for key, options in senior_opts.items() %}
+                    <label>{{ key.replace('_',' ').title() }}</label>
+                    <input type="number" name="{{ key }}" min="{{ options[0] }}" max="{{ options[-1] }}" value="{{ options[0] }}">
+                {% endfor %}
                 <div class="button-row">
                     <!-- Run Simulation 버튼 -->
                     <button type="submit" class="run-btn">▶️ Run Simulation</button>
@@ -248,63 +275,49 @@
     </div>
     <form id="stackForm" method="POST" action="{{ url_for('scenario.add_to_stack') }}">
         <input type="hidden" name="scenario_id" value="adding_staff">
-        
     </form>
     <script>
-        const currentStaff = {
-            doctor: { shift_1: 34, shift_2: 30},
-            nurse: { shift_1: 3, shift_2: 7, shift_3: 3 }
-        };
-        function createInputs(role, shiftData) {
-            const container = document.getElementById(`${role}_shift_additions`);
-            let index = 0;
-            for (const shift in shiftData) {
-                const base = shiftData[shift];
-                const max = Math.floor(base * 1.5);
+    function submitStack() {
+        const stackForm = document.getElementById('stackForm');
 
-                container.innerHTML += `
-                    <label>
-                        ${shift.charAt(0).toUpperCase() + shift.slice(1)}
-                        (Current: ${base}, Max: ${max}):
-                    </label>
-                    <input type="number" name="${role}_shift_${index}" min="${base}" max="${max}" value="${base}">
-                    <br><br>
-                `;
-                index += 1
+        // 이전에 추가된 hidden input 제거
+        stackForm.querySelectorAll('input[type="hidden"]:not([name="scenario_id"])').forEach(el => el.remove());
+
+        // 시나리오별 role 목록
+        const roles = ['intern', 'resident', 'specialist', 'junior', 'senior'];
+
+        // 각 role별 shift_1, shift_2 처리
+        roles.forEach(role => {
+            for (let i = 1; i <= 2; i++) {
+                const inputName = `${role}_shift_${i}`;
+                const inputElement = document.querySelector(`input[name="${inputName}"]`);
+                if (inputElement) {
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = inputName;
+                    hidden.value = inputElement.value;
+                    stackForm.appendChild(hidden);
+                }
             }
-        }
+        });
 
-        createInputs("doctor", currentStaff.doctor);
-        createInputs("nurse", currentStaff.nurse);
-
-        function submitStack() {
-            const stackForm = document.getElementById('stackForm');
-
-            // 이전에 추가된 hidden input 제거
-            stackForm.querySelectorAll('input[name^="doctor_shift_"], input[name^="nurse_shift_"]').forEach(el => el.remove());
-
-            // 현재 입력값 읽어서 hidden input 생성
-            const doctorInputs = document.querySelectorAll('input[name^="doctor_shift_"]');
-            doctorInputs.forEach(input => {
+        // nurse만 shift_3 있음
+        const nurse_roles = ['junior', 'senior'];
+        nurse_roles.forEach(role => {
+            const inputName = `${role}_shift_3`;
+            const inputElement = document.querySelector(`input[name="${inputName}"]`);
+            if (inputElement) {
                 const hidden = document.createElement('input');
                 hidden.type = 'hidden';
-                hidden.name = input.name; // doctor_shift_0, doctor_shift_1 ...
-                hidden.value = input.value;
+                hidden.name = inputName;
+                hidden.value = inputElement.value;
                 stackForm.appendChild(hidden);
-            });
+            }
+        });
 
-            const nurseInputs = document.querySelectorAll('input[name^="nurse_shift_"]');
-            nurseInputs.forEach(input => {
-                const hidden = document.createElement('input');
-                hidden.type = 'hidden';
-                hidden.name = input.name; // nurse_shift_0, nurse_shift_1 ...
-                hidden.value = input.value;
-                stackForm.appendChild(hidden);
-            });
-
-            // 최종 전송
-            stackForm.submit();
-        }
+        // 최종 전송
+        stackForm.submit();
+    }
     </script>
 </body>
 </html>

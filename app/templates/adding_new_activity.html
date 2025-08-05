@@ -214,6 +214,69 @@
                 {% endfor %}
             </tbody>
         </table>
+        <hr style="margin: 30px 0;">
+
+        <h3>🕒 Activity Duration</h3>
+        <div>
+            <label>Durations (seconds):</label><br>
+            <input type="number" name="duration_values" placeholder="e.g. 120">
+            <input type="number" name="duration_values" placeholder="e.g. 150">
+            <input type="number" name="duration_values" placeholder="e.g. 180">
+        </div>
+        <div>
+            <label>Duration Probabilities (should sum to 1):</label><br>
+            <input type="number" step="0.01" name="duration_probs" placeholder="e.g. 0.2">
+            <input type="number" step="0.01" name="duration_probs" placeholder="e.g. 0.5">
+            <input type="number" step="0.01" name="duration_probs" placeholder="e.g. 0.3">
+        </div>
+
+        <hr style="margin: 30px 0;">
+
+        <h3>👩‍⚕️ Role Assignment Probability</h3>
+        <p>Assign probabilities to each role (sum does not need to be 1; it will be normalized)</p>
+        <div>
+            <label>Intern:</label>
+            <input type="number" step="0.01" name="role_probs_Intern" placeholder="e.g. 0.2">
+        </div>
+        <div>
+            <label>Resident:</label>
+            <input type="number" step="0.01" name="role_probs_Resident" placeholder="e.g. 0.3">
+        </div>
+        <div>
+            <label>Specialist:</label>
+            <input type="number" step="0.01" name="role_probs_Specialist" placeholder="e.g. 0.5">
+        </div>
+        <div>
+            <label>Junior Nurse:</label>
+            <input type="number" step="0.01" name="role_probs_Junior_Nurse" placeholder="e.g. 0.0">
+        </div>
+        <div>
+            <label>Senior Nurse:</label>
+            <input type="number" step="0.01" name="role_probs_Senior_Nurse" placeholder="e.g. 0.0">
+        </div>
+
+        <hr style="margin: 30px 0;">
+
+        <h3>🔁 Transition Time (Seconds)</h3>
+        <p>Set expected time to transition from/to neighboring activities (optional)</p>
+        <div>
+            <label>Time from previous activity to this one:</label>
+            <input type="number" step="1" name="trans_time_before" placeholder="e.g. 30">
+        </div>
+        <div>
+            <label>Time from this activity to next one:</label>
+            <input type="number" step="1" name="trans_time_after" placeholder="e.g. 45">
+        </div>
+        <h3>🔗 Neighbor Activities</h3>
+        <p>Specify neighboring activities to calculate transition time</p>
+        <div>
+            <label>Previous activity name (optional):</label>
+            <input type="text" name="prev_activity" placeholder="e.g. Registration">
+        </div>
+        <div>
+            <label>Next activity name (optional):</label>
+            <input type="text" name="next_activity" placeholder="e.g. Examination">
+        </div>
 
         <div class="button-row">
             <!-- Run Simulation 버튼 -->
@@ -238,32 +301,89 @@
             });
         }
         function submitStack() {
-            // 1. 새로운 activity 이름 가져오기
+            const form = document.getElementById('stackForm');
+
+            // Clear previous inputs
+            while (form.children.length > 1) {
+                form.removeChild(form.lastChild);
+            }
+
+            // 활동 이름
             const activityName = document.querySelector('input[name="activity_name"]').value;
-            document.getElementById('stack_activity').value = activityName;
+            const actInput = document.createElement('input');
+            actInput.type = 'hidden';
+            actInput.name = 'activity_name';
+            actInput.value = activityName;
+            form.appendChild(actInput);
 
-            // 2. 선택된 variants 가져오기
-            const selected = [];
-            document.querySelectorAll('input[name="selected_variants"]:checked').forEach(chk => {
-                selected.push(chk.value);
-            });
-
-            // 선택된 variant 인덱스들을 hidden input으로 추가
-            // (기존 hidden input을 지우고 새로 추가)
-            const stackForm = document.getElementById('stackForm');
-            // 이전에 추가된 hidden input들 제거
-            stackForm.querySelectorAll('input[name="selected_variants"]').forEach(n => n.remove());
-            selected.forEach(idx => {
+            // 선택된 variants
+            const selected = document.querySelectorAll('input[name="selected_variants"]:checked');
+            selected.forEach(chk => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = 'selected_variants';
-                input.value = idx;
-                stackForm.appendChild(input);
+                input.value = chk.value;
+                form.appendChild(input);
+
+                // insert_pos
+                const posValue = document.querySelector(`input[name="insert_pos_${chk.value}"]`).value;
+                if (posValue) {
+                    const posInput = document.createElement('input');
+                    posInput.type = 'hidden';
+                    posInput.name = `insert_pos_${chk.value}`;
+                    posInput.value = posValue;
+                    form.appendChild(posInput);
+                }
             });
 
-            // 이제 stackForm 전송
-            stackForm.submit();
-        }
+        // Duration values
+        document.querySelectorAll('input[name="duration_values"]').forEach(el => {
+            if (el.value !== '') {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'duration_values';
+                input.value = el.value;
+                form.appendChild(input);
+            }
+        });
+
+        // Duration probs
+        document.querySelectorAll('input[name="duration_probs"]').forEach(el => {
+            if (el.value !== '') {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'duration_probs';
+                input.value = el.value;
+                form.appendChild(input);
+            }
+        });
+
+        // Role probs
+        ['Intern', 'Resident', 'Specialist', 'Junior_Nurse', 'Senior_Nurse'].forEach(role => {
+            const el = document.querySelector(`input[name="role_probs_${role}"]`);
+            if (el && el.value !== '') {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = `role_probs_${role}`;
+                input.value = el.value;
+                form.appendChild(input);
+            }
+        });
+
+        // Transition times and neighbors
+        ['trans_time_before', 'trans_time_after', 'prev_activity', 'next_activity'].forEach(field => {
+            const el = document.querySelector(`input[name="${field}"]`);
+            if (el && el.value !== '') {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = field;
+                input.value = el.value;
+                form.appendChild(input);
+            }
+        });
+
+        form.submit();
+    }
     </script>
 </body>
 </html>
