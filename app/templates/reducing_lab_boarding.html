@@ -132,28 +132,30 @@
     <div class="wrapper">
       <h1>⚡ Reducing Lab Times / Boarding Times</h1>
   
-      <form method="post" action="{{ url_for('scenario.submit_reduce_lab_boarding') }}">
-        <!-- 폼 내용 그대로 -->
-        <label for="lab_reduce_ratio">
-          Lab Time Reduction Ratio (%)<br>
-          <small>ex: 20 → Lab 관련 활동 시간을 20% 감소</small>
-        </label>
-        <input type="number" id="lab_reduce_ratio" name="lab_reduce_ratio" min="0" max="100" value="0">
-  
-        <label for="boarding_reduce_ratio">
-          Boarding Time Reduction Ratio (%)<br>
-          <small>ex: 30 → 병상 대기 시간을 30% 감소</small>
-        </label>
-        <input type="number" id="boarding_reduce_ratio" name="boarding_reduce_ratio" min="0" max="100" value="0">
-  
-        <div class="button-row">
-            <!-- Run Simulation 버튼 -->
-            <button type="submit" class="run-btn">▶️ Run Simulation</button>
+      <form method="POST" action="{{ url_for('scenario.submit_reduce_lab_boarding') }}">
+        <label>Select Base Activity:</label>
+        <select id="prevActivitySelect" name="prev_activity" onchange="showNextOptions()">
+        <option value="">-- Select an activity --</option>
+            {% for act in activities %}
+                <option value="{{ act }}">{{ act }}</option>
+            {% endfor %}
+        </select>
 
-            <!-- Add to Stack 버튼 -->
+        <div id="nextActivityBox">
+            <label>Next Activity:</label>
+            <select id="nextActivitySelect" name="next_activity">
+                <!-- Filled dynamically -->
+            </select>
+
+            <label>New Transition Time (Minutes):</label>
+            <input type="number" step="0.01" name="new_trans_time" required>
+        </div>
+
+        <div class="button-row">
+            <button type="submit" class="run-btn">▶️ Run Simulation</button>
             <button type="button" class="stack-btn" onclick="submitStack()">➕ Add to Stack</button>
         </div>
-      </form>
+    </form>
   
       <a href="{{ url_for('scenario.scenario_map') }}">← Back to Scenario Map</a>
   
@@ -205,32 +207,67 @@
     <form id="stackForm" method="POST" action="{{ url_for('scenario.add_to_stack') }}">
         <input type="hidden" name="scenario_id" value="reduce_time">
     </form>
+    <script id="transition-map-json" type="application/json">
+        {{ transition_time_map | tojson }}
+    </script>
     <script>
+        const transitionMap = JSON.parse(
+            document.getElementById('transition-map-json').textContent
+        );
+
+        function showNextOptions() {
+            const prevSelect = document.getElementById("prevActivitySelect");
+            const nextBox = document.getElementById("nextActivityBox");
+            const nextSelect = document.getElementById("nextActivitySelect");
+            const selected = prevSelect.value;
+
+            nextSelect.innerHTML = '';
+            if (selected && transitionMap[selected]) {
+                Object.entries(transitionMap[selected]).forEach(([nextAct, time]) => {
+                    const option = document.createElement('option');
+                    option.value = nextAct;
+                    option.textContent = `${nextAct} (Current: ${time} min)`;
+                    nextSelect.appendChild(option);
+                });
+                nextBox.style.display = 'block';
+            } else {
+                nextBox.style.display = 'none';
+            }
+        }
         function submitStack() {
             const stackForm = document.getElementById('stackForm');
 
-            // 기존 hidden input 중 scenario_id 제외하고 모두 제거 (중복 방지)
+            // 기존 hidden input 제거 (scenario_id는 유지)
             Array.from(stackForm.querySelectorAll('input')).forEach(input => {
                 if (input.name !== 'scenario_id') input.remove();
             });
 
-            // Lab Time Reduction 값
-            const labValue = document.getElementById('lab_reduce_ratio').value;
-            const labInput = document.createElement('input');
-            labInput.type = 'hidden';
-            labInput.name = 'lab_reduce_ratio';
-            labInput.value = labValue;
-            stackForm.appendChild(labInput);
+            // 1. prev_activity (base activity)
+            const baseActivity = document.getElementById('prevActivitySelect').value;
+            const baseInput = document.createElement('input');
+            baseInput.type = 'hidden';
+            baseInput.name = 'prev_activity';
+            baseInput.value = baseActivity;
+            stackForm.appendChild(baseInput);
 
-            // Boarding Time Reduction 값
-            const boardingValue = document.getElementById('boarding_reduce_ratio').value;
-            const boardingInput = document.createElement('input');
-            boardingInput.type = 'hidden';
-            boardingInput.name = 'boarding_reduce_ratio';
-            boardingInput.value = boardingValue;
-            stackForm.appendChild(boardingInput);
+            // 2. next_activity
+            const nextActivity = document.getElementById('nextActivitySelect').value;
+            const nextInput = document.createElement('input');
+            nextInput.type = 'hidden';
+            nextInput.name = 'next_activity';
+            nextInput.value = nextActivity;
+            stackForm.appendChild(nextInput);
 
-            // stackForm 전송
+
+             // 3. new_trans_time
+            const newTime = document.querySelector('input[name="new_trans_time"]').value;
+            const timeInput = document.createElement('input');
+            timeInput.type = 'hidden';
+            timeInput.name = 'new_trans_time';
+            timeInput.value = newTime;
+            stackForm.appendChild(timeInput);
+
+            // submit
             stackForm.submit();
         }
     </script>

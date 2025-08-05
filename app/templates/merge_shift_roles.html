@@ -58,7 +58,7 @@
 
         .change-matrix-wrapper {
             width: 100%;
-            max-width: 600px;
+            max-width: 800px;
         }
 
         .change-matrix {
@@ -138,102 +138,91 @@
             
             <!-- Shift section -->
             <div class="section">
-                <!--
-                <h3>🕐 Modify Shift Hours</h3>
-
-                <strong>👨‍⚕️ Doctors (2 shifts)</strong><br>
-                <label for="doc_shift_1_start">Shift 1 Start:</label>
-                <select id="doc_shift_1_start" name="doc_shift_1_start">
-                    {% for hour in range(0, 24) %}
-                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
-                    {% endfor %}
-                </select>
-                <label for="doc_shift_1_end">Shift 1 End:</label>
-                <select id="doc_shift_1_end" name="doc_shift_1_end">
-                    {% for hour in range(0, 24) %}
-                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
-                    {% endfor %}
-                </select>
-
-                <label for="doc_shift_2_start">Shift 2 Start:</label>
-                <select id="doc_shift_2_start" name="doc_shift_2_start">
-                    {% for hour in range(0, 24) %}
-                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
-                    {% endfor %}
-                </select>
-                <label for="doc_shift_2_end">Shift 2 End:</label>
-                <select id="doc_shift_2_end" name="doc_shift_2_end">
-                    {% for hour in range(0, 24) %}
-                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
-                    {% endfor %}
-                </select>
-
-                <br><br>
-                <strong>👩‍⚕️ Nurses (3 shifts)</strong><br>
-                <label for="nurse_shift_1_start">Shift 1 Start:</label>
-                <select id="nurse_shift_1_start" name="nurse_shift_1_start">
-                    {% for hour in range(0, 24) %}
-                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
-                    {% endfor %}
-                </select>
-                <label for="nurse_shift_1_end">Shift 1 End:</label>
-                <select id="nurse_shift_1_end" name="nurse_shift_1_end">
-                    {% for hour in range(0, 24) %}
-                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
-                    {% endfor %}
-                </select>
-
-                <label for="nurse_shift_2_start">Shift 2 Start:</label>
-                <select id="nurse_shift_2_start" name="nurse_shift_2_start">
-                    {% for hour in range(0, 24) %}
-                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
-                    {% endfor %}
-                </select>
-                <label for="nurse_shift_2_end">Shift 2 End:</label>
-                <select id="nurse_shift_2_end" name="nurse_shift_2_end">
-                    {% for hour in range(0, 24) %}
-                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
-                    {% endfor %}
-                </select>
-
-                <label for="nurse_shift_3_start">Shift 3 Start:</label>
-                <select id="nurse_shift_3_start" name="nurse_shift_3_start">
-                    {% for hour in range(0, 24) %}
-                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
-                    {% endfor %}
-                </select>
-                <label for="nurse_shift_3_end">Shift 3 End:</label>
-                <select id="nurse_shift_3_end" name="nurse_shift_3_end">
-                    {% for hour in range(0, 24) %}
-                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
-                    {% endfor %}
-                </select>
-                -->
-                <strong>👨‍⚕️ Doctors (2 shifts)</strong><br>
-                <label for="doctor_shift_1_start">Shift 1 Start:</label>
-                <select id="doctor_shift_1_start" name="doctor_shift_1_start">
+                <strong>👨‍⚕️ Intern (2 shifts)</strong><br>
+                <label for="intern_shift_1_start">Shift 1 Start:</label>
+                <select id="intern_shift_1_start" name="intern_shift_1_start">
                     <option value="">-- Select --</option>
                     {% for hour in range(0, 24) %}
                         <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
                     {% endfor %}
                 </select>
-                <label for="doctor_shift_1_end">Shift 1 End:</label>
-                <select id="doctor_shift_1_end" name="doctor_shift_1_end">
+                <label for="intern_shift_1_end">Shift 1 End:</label>
+                <select id="intern_shift_1_end" name="intern_shift_1_end">
                     <option value="">-- Select --</option>
                     {% for hour in range(0, 24) %}
                         <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
                     {% endfor %}
                 </select>
 
-                <label for="doctor_shift_2_start">Shift 2 Start:</label>
-                <select id="doctor_shift_2_start" name="doctor_shift_2_start">
+                <label for="intern_shift_2_start">Shift 2 Start:</label>
+                <select id="intern_shift_2_start" name="intern_shift_2_start">
                     <option value="">-- Select --</option>
                     {% for hour in range(0, 24) %}
                         <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
                     {% endfor %}
                 </select>
-                <label for="doctor_shift_2_end">Shift 2 End:</label>
-                <select id="doctor_shift_2_end" name="doctor_shift_2_end">
+                <label for="intern_shift_2_end">Shift 2 End:</label>
+                <select id="intern_shift_2_end" name="intern_shift_2_end">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <strong>👨‍⚕️ Resident (2 shifts)</strong><br>
+                <label for="resident_shift_1_start">Shift 1 Start:</label>
+                <select id="resident_shift_1_start" name="resident_shift_1_start">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="resident_shift_1_end">Shift 1 End:</label>
+                <select id="resident_shift_1_end" name="resident_shift_1_end">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+
+                <label for="resident_shift_2_start">Shift 2 Start:</label>
+                <select id="resident_shift_2_start" name="resident_shift_2_start">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="resident_shift_2_end">Shift 2 End:</label>
+                <select id="resident_shift_2_end" name="resident_shift_2_end">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <strong>👨‍⚕️ Specialist (2 shifts)</strong><br>
+                <label for="specialist_shift_1_start">Shift 1 Start:</label>
+                <select id="specialist_shift_1_start" name="specialist_shift_1_start">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="specialist_shift_1_end">Shift 1 End:</label>
+                <select id="specialist_shift_1_end" name="specialist_shift_1_end">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+
+                <label for="specialist_shift_2_start">Shift 2 Start:</label>
+                <select id="specialist_shift_2_start" name="specialist_shift_2_start">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="specialist_shift_2_end">Shift 2 End:</label>
+                <select id="specialist_shift_2_end" name="specialist_shift_2_end">
                     <option value="">-- Select --</option>
                     {% for hour in range(0, 24) %}
                         <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
@@ -243,46 +232,91 @@
                 <br><br>
 
                 <!-- Nurse shift inputs -->
-                <strong>👩‍⚕️ Nurses (3 shifts)</strong><br>
-                <label for="nurse_shift_1_start">Shift 1 Start:</label>
-                <select id="nurse_shift_1_start" name="nurse_shift_1_start">
+                <strong>👩‍⚕️ Junior Nurse (3 shifts)</strong><br>
+                <label for="junior_shift_1_start">Shift 1 Start:</label>
+                <select id="junior_shift_1_start" name="junior_shift_1_start">
                     <option value="">-- Select --</option>
                     {% for hour in range(0, 24) %}
                         <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
                     {% endfor %}
                 </select>
-                <label for="nurse_shift_1_end">Shift 1 End:</label>
-                <select id="nurse_shift_1_end" name="nurse_shift_1_end">
-                    <option value="">-- Select --</option>
-                    {% for hour in range(0, 24) %}
-                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
-                    {% endfor %}
-                </select>
-
-                <label for="nurse_shift_2_start">Shift 2 Start:</label>
-                <select id="nurse_shift_2_start" name="nurse_shift_2_start">
-                    <option value="">-- Select --</option>
-                    {% for hour in range(0, 24) %}
-                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
-                    {% endfor %}
-                </select>
-                <label for="nurse_shift_2_end">Shift 2 End:</label>
-                <select id="nurse_shift_2_end" name="nurse_shift_2_end">
+                <label for="junior_shift_1_end">Shift 1 End:</label>
+                <select id="junior_shift_1_end" name="junior_shift_1_end">
                     <option value="">-- Select --</option>
                     {% for hour in range(0, 24) %}
                         <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
                     {% endfor %}
                 </select>
 
-                <label for="nurse_shift_3_start">Shift 3 Start:</label>
-                <select id="nurse_shift_3_start" name="nurse_shift_3_start">
+                <label for="junior_shift_2_start">Shift 2 Start:</label>
+                <select id="junior_shift_2_start" name="junior_shift_2_start">
                     <option value="">-- Select --</option>
                     {% for hour in range(0, 24) %}
                         <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
                     {% endfor %}
                 </select>
-                <label for="nurse_shift_3_end">Shift 3 End:</label>
-                <select id="nurse_shift_3_end" name="nurse_shift_3_end">
+                <label for="junior_shift_2_end">Shift 2 End:</label>
+                <select id="junior_shift_2_end" name="junior_shift_2_end">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+
+                <label for="junior_shift_3_start">Shift 3 Start:</label>
+                <select id="junior_shift_3_start" name="junior_shift_3_start">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="junior_shift_3_end">Shift 3 End:</label>
+                <select id="junior_shift_3_end" name="junior_shift_3_end">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <strong>👩‍⚕️ Senior Nurse (3 shifts)</strong><br>
+                <label for="senior_shift_1_start">Shift 1 Start:</label>
+                <select id="senior_shift_1_start" name="senior_shift_1_start">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="senior_shift_1_end">Shift 1 End:</label>
+                <select id="senior_shift_1_end" name="senior_shift_1_end">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+
+                <label for="senior_shift_2_start">Shift 2 Start:</label>
+                <select id="senior_shift_2_start" name="senior_shift_2_start">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="senior_shift_2_end">Shift 2 End:</label>
+                <select id="senior_shift_2_end" name="senior_shift_2_end">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+
+                <label for="senior_shift_3_start">Shift 3 Start:</label>
+                <select id="senior_shift_3_start" name="senior_shift_3_start">
+                    <option value="">-- Select --</option>
+                    {% for hour in range(0, 24) %}
+                        <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
+                    {% endfor %}
+                </select>
+                <label for="senior_shift_3_end">Shift 3 End:</label>
+                <select id="senior_shift_3_end" name="senior_shift_3_end">
                     <option value="">-- Select --</option>
                     {% for hour in range(0, 24) %}
                         <option value="{{ hour }}">{{ '%02d' % hour }}:00</option>
@@ -370,8 +404,8 @@
             });
 
             // --- 체크박스 상태 수집 ---
-            const mergeDoctor = document.getElementById('merge_doctor').checked ? '1' : '0';
-            const mergeNurse = document.getElementById('merge_nurse').checked ? '1' : '0';
+            const mergeDoctor = document.getElementById('merge_doctor').checked ? '1' : '';
+            const mergeNurse = document.getElementById('merge_nurse').checked ? '1' : '';
 
             let inputMergeDoctor = document.createElement('input');
             inputMergeDoctor.type = 'hidden';
@@ -387,11 +421,18 @@
 
             // --- 시프트 시간 선택값 수집 ---
             const shiftFields = [
-                'doctor_shift_1_start', 'doctor_shift_1_end',
-                'doctor_shift_2_start', 'doctor_shift_2_end',
-                'nurse_shift_1_start',  'nurse_shift_1_end',
-                'nurse_shift_2_start',  'nurse_shift_2_end',
-                'nurse_shift_3_start',  'nurse_shift_3_end'
+                'intern_shift_1_start', 'intern_shift_1_end',
+                'intern_shift_2_start', 'intern_shift_2_end',
+                'resident_shift_1_start', 'resident_shift_1_end',
+                'resident_shift_2_start', 'resident_shift_2_end',
+                'specialist_shift_1_start', 'specialist_shift_1_end',
+                'specialist_shift_2_start', 'specialist_shift_2_end',
+                'junior_shift_1_start', 'junior_shift_1_end',
+                'junior_shift_2_start', 'junior_shift_2_end',
+                'junior_shift_3_start', 'junior_shift_3_end',
+                'senior_shift_1_start', 'senior_shift_1_end',
+                'senior_shift_2_start', 'senior_shift_2_end',
+                'senior_shift_3_start', 'senior_shift_3_end'
             ];
 
             shiftFields.forEach(fieldId => {

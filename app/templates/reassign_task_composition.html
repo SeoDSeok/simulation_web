@@ -137,41 +137,28 @@
     <h1>🛠 Varying Task Composition</h1>
     <div class="container">
         <form method="post" action="{{ url_for('scenario.submit_reassign_task') }}">
-            {% for activity in activities %}
-                <div class="assignment-block">
-                    <label for="{{ activity }}">{{ activity }}</label>
-
-                    {% set available_roles = role_map[activity] %}
-                    {% if (doctor_roles | select('in', available_roles) | list) and
-                          (nurse_roles | select('in', available_roles) | list) %}
-                        <!-- Doctor-Nurse 혼합 선택 가능 -->
-                        <select name="{{ activity }}" class="role-select">
-                            <option value="">-- Select Composition --</option>
-                            <option value="Doctor:1.0,Nurse:0.0">100% Doctor</option>
-                            <option value="Doctor:0.8,Nurse:0.2">80% Doctor / 20% Nurse</option>
-                            <option value="Doctor:0.5,Nurse:0.5">50% Doctor / 50% Nurse</option>
-                            <option value="Doctor:0.2,Nurse:0.8">20% Doctor / 80% Nurse</option>
-                            <option value="Doctor:0.0,Nurse:1.0">100% Nurse</option>
-                        </select>
-                    {% elif (doctor_roles | select('in', available_roles) | list) %}
-                        <select name="{{ activity }}" class="role-select">
-                            <option value="Doctor:1.0">100% Doctor Only</option>
-                        </select>
-                    {% elif (nurse_roles | select('in', available_roles) | list) %}
-                        <select name="{{ activity }}" class="role-select">
-                            <option value="Nurse:1.0">100% Nurse Only</option>
-                        </select>
-                    {% endif %}
+        {% for activity in activities %}
+            <div class="assignment-block">
+            <h3>{{ activity }}</h3>
+            {% set available_roles = role_map[activity] %}
+            {% for role in available_roles %}
+                <div class="role-input">
+                <label for="{{ activity }}_{{ role }}">{{ role }} ratio:</label>
+                <input type="number" step="0.01" min="0" max="1"
+                        name="{{ activity }}_{{ role }}"
+                        id="{{ activity }}_{{ role }}"
+                        placeholder="0.0~1.0">
                 </div>
             {% endfor %}
-            <div class="button-row">
-                <!-- Run Simulation 버튼 -->
-                <button type="submit" class="run-btn">▶️ Run Simulation</button>
-
-                <!-- Add to Stack 버튼 -->
-                <button type="button" class="stack-btn" onclick="submitStack()">➕ Add to Stack</button>
             </div>
-            <a href="{{ url_for('scenario.scenario_map') }}">← Back to Scenario Map</a>
+            <hr>
+        {% endfor %}
+
+        <div class="button-row">
+            <button type="submit" class="run-btn">▶️ Run Simulation</button>
+            <button type="button" class="stack-btn" onclick="submitStack()">➕ Add to Stack</button>
+        </div>
+        <a href="{{ url_for('scenario.scenario_map') }}">← Back to Scenario Map</a>
         </form>
 
         <div class="change-matrix-wrapper">
@@ -225,21 +212,20 @@
         function submitStack() {
             const stackForm = document.getElementById('stackForm');
 
-            // 기존에 scenario_id 외에 붙어있던 hidden input들 제거
             Array.from(stackForm.querySelectorAll('input'))
                 .forEach(input => {
                     if (input.name !== 'scenario_id') input.remove();
                 });
 
-            // 현재 화면의 모든 select 값 읽기
-            document.querySelectorAll('form select.role-select').forEach(select => {
-                const activityName = select.name;
-                const selectedValue = select.value;
-                if (selectedValue && selectedValue.trim() !== "") {
+            // 모든 입력 필드 수집: input[type=number]
+            document.querySelectorAll('form input[type=number]').forEach(input => {
+                const inputName = input.name;
+                const inputValue = input.value;
+                if (inputValue && inputValue.trim() !== "") {
                     const hidden = document.createElement('input');
                     hidden.type = 'hidden';
-                    hidden.name = activityName; // 예: "처방", "초진"
-                    hidden.value = selectedValue; // 예: "Doctor:0.8,Nurse:0.2"
+                    hidden.name = inputName;
+                    hidden.value = inputValue;
                     stackForm.appendChild(hidden);
                 }
             });
