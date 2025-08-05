@@ -128,7 +128,7 @@
     <div class="container">
         <h2>❌📋 Remove Activity Scenario</h2>
 
-        <form method="POST" action="{{ url_for('scenario.remove_activity_compare') }}">
+        <form method="POST" action="{{ url_for('scenario.submit_remove_activity') }}">
             <label for="activity">Select an activity to remove:</label>
             <select name="activity" id="activity">
                 {% for a in activities %}

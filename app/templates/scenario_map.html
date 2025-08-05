@@ -147,10 +147,71 @@
     .clear-stack-btn:hover {
       background-color: #a71d2a;
     }
+    .stack-container {
+      background: #ffffff;
+      margin: 20px auto;
+      max-width: 800px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+
+    .stack-container h3 {
+      margin-top: 0;
+      color: #1c65b2;
+      font-size: 20px;
+    }
+
+    .stack-list {
+      list-style: none;
+      padding: 0;
+      margin: 10px 0 0 0;
+    }
+
+    .stack-item {
+      padding: 8px 12px;
+      margin-bottom: 6px;
+      background: #f4f7fb;
+      border-left: 5px solid #1c65b2;
+      border-radius: 4px;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stack-param {
+      font-weight: bold;
+      color: #555;
+    }
+
+    .stack-empty {
+      color: #999;
+      font-style: italic;
+      margin: 0;
+    }
+    
   </style>
 </head>
 <body>
   <h2>Scenario Selection Map</h2>
+  <div class="stack-container">
+    <h3>📌 Current Scenario Stack</h3>
+    {% if stack and stack|length > 0 %}
+      <ul class="stack-list">
+        {% for step in stack %}
+          <li class="stack-item">
+            <span class="stack-type">{{ loop.index }}. {{ step.type|replace('_',' ')|title }}</span>
+            {% if step.params.activity %}
+              <span class="stack-param">→ {{ step.params.activity }}</span>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="stack-empty">No scenarios added yet.</p>
+    {% endif %}
+  </div>
   <div class="grid-container">
 
     <!-- Column Headers -->
@@ -198,7 +259,7 @@
   </div>
   <div class="bottom-buttons">
     <!-- Run 버튼 -->
-    <form method="get" action="{{ url_for('scenario.run_stack') }}">
+    <form method="get" action="{{ url_for('scenario.run_stack_loading') }}">
       <button type="submit" class="run-all-btn">▶ Run Simulation with All Scenarios</button>
     </form>
 

@@ -9,16 +9,13 @@
             margin: 40px;
             background-color: #f8f9fa;
         }
-
         h1 {
             color: #333;
         }
-
         .container {
             display: flex;
             gap: 60px;
         }
-
         form {
             background-color: #fff;
             padding: 30px;
@@ -27,26 +24,21 @@
             width: 500px;
             flex-shrink: 0;
         }
-
         .role-section {
             margin-bottom: 25px;
         }
-
         .role-section h3 {
             margin-bottom: 10px;
             color: #0056b3;
         }
-
         .shift-input {
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
         }
-
         .shift-input label {
             flex: 1;
         }
-
         .shift-input input {
             flex: 1;
             padding: 5px;
@@ -54,93 +46,13 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-
-        input[type="submit"] {
-            background-color: #0056b3;
-            color: white;
-            padding: 10px 25px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        input[type="submit"]:hover {
-            background-color: #004095;
-        }
-
-        /* Change Matrix */
-        .change-matrix-wrapper {
-            width: 100%;
-            max-width: 600px;
-        }
-
-        .change-matrix {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        .change-matrix th, .change-matrix td {
-            border: 1px solid #999;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .change-matrix .header {
-            font-weight: bold;
-            border-top: none;
-            border-left: none;
-            border-right: none;
-        }
-
-        .change-matrix .header2 {
-            font-weight: bold;
-            background-color: #e9ecef;
-        }
-
-        .change-matrix .shaded {
-            background-color: #d0d0d0;
-        }
-
-        .thick-border-right {
-            border-right: 5px solid black !important;
-        }
-
-        .thick-border-left {
-            border-left: 5px solid black !important;
-        }
-
-        .another {
-            color: black;
-        }
-
-        hr {
-            border: none;
-            border-top: 2px solid #bbb;
-            margin: 20px 0;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
         .button-row {
             display: flex;
-            justify-content: center; /* 가운데 정렬 */
-            gap: 15px; /* 버튼 간격 */
+            justify-content: center;
+            gap: 15px;
             margin-top: 20px;
+            margin-bottom: 20px;
         }
-
         .run-btn {
             padding: 10px 25px;
             font-size: 16px;
@@ -151,7 +63,6 @@
             cursor: pointer;
         }
         .run-btn:hover { background-color: #0056b3; }
-
         .stack-btn {
             padding: 10px 25px;
             font-size: 16px;
@@ -165,6 +76,40 @@
         #stackForm {
             display: none;
         }
+        .change-matrix-wrapper {
+            width: 100%;
+            max-width: 600px;
+        }
+        .change-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .change-matrix th, .change-matrix td {
+            border: 1px solid #999;
+            padding: 20px;
+            text-align: center;
+        }
+        .change-matrix .header {
+            font-weight: bold;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+        .change-matrix .header2 {
+            font-weight: bold;
+            background-color: #e9ecef;
+        }
+        .change-matrix .shaded {
+            background-color: #d0d0d0;
+        }
+        .thick-border-left {
+            border-left: 5px solid black !important;
+        }
+        .back-button {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -172,13 +117,13 @@
     <div class="container">
         <form method="post" action="{{ url_for('scenario.submit_rostering') }}">
             <h2>👨‍⚕️ Doctors</h2>
-            {% for role in roles if role in ['Intern', 'Resident', 'Specialist'] %}
+            {% for role in ['Intern','Resident','Specialist'] %}
             <div class="role-section">
                 <h3>{{ role }}</h3>
-                {% for shift in ['shift_1', 'shift_2'] %}
+                {% for shift in ['1','2'] %}
                 <div class="shift-input">
-                    <label for="{{ role }}_{{ shift }}">{{ shift.replace("_", " ").capitalize() }}:</label>
-                    <input type="number" id="{{ role }}_{{ shift }}" name="{{ role }}_{{ shift }}" min="0" required>
+                    <label for="{{ role }}_shift_{{ shift }}">Shift {{ shift }}:</label>
+                    <input type="number" id="{{ role }}_shift_{{ shift }}" name="{{ role }}_shift_{{ shift }}" min="0" required>
                 </div>
                 {% endfor %}
             </div>
@@ -187,28 +132,26 @@
             <hr>
 
             <h2>👩‍⚕️ Nurses</h2>
-            {% for role in roles if role in ['Junior', 'Senior'] %}
+            {% for role in ['Junior','Senior'] %}
             <div class="role-section">
                 <h3>{{ role }}</h3>
-                {% for shift in ['shift_1', 'shift_2', 'shift_3'] %}
+                {% for shift in ['1','2','3'] %}
                 <div class="shift-input">
-                    <label for="{{ role }}_{{ shift }}">{{ shift.replace("_", " ").capitalize() }}:</label>
-                    <input type="number" id="{{ role }}_{{ shift }}" name="{{ role }}_{{ shift }}" min="0" required>
+                    <label for="{{ role }}_shift_{{ shift }}">Shift {{ shift }}:</label>
+                    <input type="number" id="{{ role }}_shift_{{ shift }}" name="{{ role }}_shift_{{ shift }}" min="0" required>
                 </div>
                 {% endfor %}
             </div>
             {% endfor %}
-            <div class="button-row">
-                <!-- Run Simulation 버튼 -->
-                <button type="submit" class="run-btn">▶️ Run Simulation</button>
 
-                <!-- Add to Stack 버튼 -->
+            <div class="button-row">
+                <button type="submit" class="run-btn">▶️ Run Simulation</button>
                 <button type="button" class="stack-btn" onclick="submitStack()">➕ Add to Stack</button>
             </div>
-
             <a href="{{ url_for('scenario.scenario_map') }}" class="back-button">← Back to Scenario Map</a>
         </form>
 
+        <!-- Change Matrix -->
         <div class="change-matrix-wrapper">
             <h3 class="another">Change Matrix for ‘Rostering’</h3>
             <table class="change-matrix">
@@ -253,49 +196,42 @@
             </table>
         </div>
     </div>
+
     <form id="stackForm" method="POST" action="{{ url_for('scenario.add_to_stack') }}">
         <input type="hidden" name="scenario_id" value="rostering">
-        <input type="hidden" name="Intern_shift_1" id="stack_Intern_shift_1">
-        <input type="hidden" name="Intern_shift_2" id="stack_Intern_shift_2">
-        <input type="hidden" name="Resident_shift_1" id="stack_Resident_shift_1">
-        <input type="hidden" name="Resident_shift_2" id="stack_Resident_shift_2">
-        <input type="hidden" name="Specialist_shift_1" id="stack_Specialist_shift_1">
-        <input type="hidden" name="Specialist_shift_2" id="stack_Specialist_shift_2">
-        <!-- nurse roles -->
-        <input type="hidden" name="Junior_shift_1" id="stack_Junior_shift_1">
-        <input type="hidden" name="Junior_shift_2" id="stack_Junior_shift_2">
-        <input type="hidden" name="Junior_shift_3" id="stack_Junior_shift_3">
-        <input type="hidden" name="Senior_shift_1" id="stack_Senior_shift_1">
-        <input type="hidden" name="Senior_shift_2" id="stack_Senior_shift_2">
-        <input type="hidden" name="Senior_shift_3" id="stack_Senior_shift_3">
+        <!-- hidden inputs for all roles/shifts -->
+        {% for role in ['Intern','Resident','Specialist'] %}
+            {% for shift in ['1','2'] %}
+                <input type="hidden" name="{{ role }}_shift_{{ shift }}" id="stack_{{ role }}_shift_{{ shift }}">
+            {% endfor %}
+        {% endfor %}
+        {% for role in ['Junior','Senior'] %}
+            {% for shift in ['1','2','3'] %}
+                <input type="hidden" name="{{ role }}_shift_{{ shift }}" id="stack_{{ role }}_shift_{{ shift }}">
+            {% endfor %}
+        {% endfor %}
     </form>
+
     <script>
         function submitStack() {
-            const roles = ['Intern','Resident','Specialist','Junior','Senior'];
-            const doctorShifts = ['shift_1','shift_2'];
-            const nurseShifts = ['shift_1','shift_2','shift_3'];
+            const rolesDoctor = ['Intern','Resident','Specialist'];
+            const shiftsDoctor = ['1','2'];
+            const rolesNurse = ['Junior','Senior'];
+            const shiftsNurse = ['1','2','3'];
 
-            // doctor roles
-            ['Intern','Resident','Specialist'].forEach(role => {
-                doctorShifts.forEach(shift => {
-                    const inputId = `${role}_${shift}`;
-                    const hiddenId = `stack_${role}_${shift}`;
-                    const value = document.getElementById(inputId).value;
-                    document.getElementById(hiddenId).value = value;
+            rolesDoctor.forEach(role=>{
+                shiftsDoctor.forEach(s=>{
+                    const v = document.getElementById(`${role}_shift_${s}`).value;
+                    document.getElementById(`stack_${role}_shift_${s}`).value = v;
+                });
+            });
+            rolesNurse.forEach(role=>{
+                shiftsNurse.forEach(s=>{
+                    const v = document.getElementById(`${role}_shift_${s}`).value;
+                    document.getElementById(`stack_${role}_shift_${s}`).value = v;
                 });
             });
 
-            // nurse roles
-            ['Junior','Senior'].forEach(role => {
-                nurseShifts.forEach(shift => {
-                    const inputId = `${role}_${shift}`;
-                    const hiddenId = `stack_${role}_${shift}`;
-                    const value = document.getElementById(inputId).value;
-                    document.getElementById(hiddenId).value = value;
-                });
-            });
-
-            // 전송
             document.getElementById('stackForm').submit();
         }
     </script>
