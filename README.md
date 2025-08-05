@@ -46,37 +46,40 @@ Transition time when going from a specific activity to the next activity from hi
 
 ### 2. Default Simulation Results Screen
 Results for running simulations without any options
-- Number of Intern
-- Number of Resident
-- Number of Specialist
-- Number of Junior Nurse
-- Number of Senior Nurse
-- Number of Intern in shift_1
-- Number of Intern in shift_2
-- Number of Resident in shift_1
-- Number of Resident in shift_2
-- Number of Specialist in shift_1
-- Number of Specialist in shift_2
-- Number of Junior Nurses in shift_1
-- Number of Junior Nurses in shift_2
-- Number of Junior Nurses in shift_3
-- Number of Senior Nurses in shift_1
-- Number of Senior Nurses in shift_2
-- Number of Senior Nurses in shift_3
-- Median Waiting Time (minutes)
-- Mean Waiting Time (minutes)
-- Case Duration (max)
-- Case Duration (median)
-- Case Duration (mean)
+- Doctor Shift
+    - Number of Intern in shift_1
+    - Number of Intern in shift_2
+    - Number of Resident in shift_1
+    - Number of Resident in shift_2
+    - Number of Specialist in shift_1
+    - Number of Specialist in shift_2
+- Nurse Shift
+    - Number of Junior Nurses in shift_1
+    - Number of Junior Nurses in shift_2
+    - Number of Junior Nurses in shift_3
+    - Number of Senior Nurses in shift_1
+    - Number of Senior Nurses in shift_2
+    - Number of Senior Nurses in shift_3
+- Waiting Time
+    - Median Waiting Time (minutes)
+    - Mean Waiting Time (minutes)
+- Duration Time
+    - Case Duration (max)
+    - Case Duration (median)
+    - Case Duration (mean)
 
 ### 3. Scenario Map Screen
 Changeable scenario screen extracted from taxonomy
-<img width="1911" height="922" alt="Image" src="https://github.com/user-attachments/assets/60952ccf-c0a7-40d3-b005-4b484642c0d1" />
+<img width="1907" height="860" alt="Image" src="https://github.com/user-attachments/assets/f35bae9f-8e59-4756-901c-f1ad0f939a24" />
 - Run Simulation with All Scenarios :
 Use accumulated scenarios to conduct simulations
 - Clear Scenario Stack : 
 Remove all accumulated scenarios
 
 ### 4. Click the Scenario button
+Click the scenario button you want to select
+
 ### 5. Option screen corresponding to the scenario
+The Select changeable parameters screen for the selected scenario appears
+
 ### 6. Simulation Results Comparison Table Screen
