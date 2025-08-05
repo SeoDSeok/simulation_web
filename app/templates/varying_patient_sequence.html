@@ -193,8 +193,8 @@
       {% for idx, variant in enumerate(variants) %}
         <div class="variant-block">
           <label>Variant #{{ idx }}</label><br>
-          <small>현재 활동 순서: {{ variant|join(' → ') }}</small><br><br>
-          <label for="new_variant_{{ idx }}">새로운 활동 순서를 쉼표(,)로 입력:</label><br>
+          <small>Current Activity Order: {{ variant|join(' → ') }}</small><br><br>
+          <label for="new_variant_{{ idx }}">Enter a new sequence of activities with commas(,):</label><br>
           <input type="text" name="new_variant_{{ idx }}" placeholder="예) 접수,분류,초진,처방">
         </div>
       {% endfor %}

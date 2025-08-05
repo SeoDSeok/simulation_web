@@ -101,7 +101,7 @@
     <h1>📈 Varying Patient Demand</h1>
     <form method="post" action="{{ url_for('scenario.submit_vary_demand') }}">
         <label for="demand_multiplier">Demand Multiplier (%)</label><br>
-        <small>예: 150 → 환자 수와 도착 빈도를 150%로 증가</small><br>
+        <small>예: 150 → Increase the number of cases and frequency of arrival to 150%</small><br>
         <input type="number" id="demand_multiplier" name="demand_multiplier" min="10" max="300" value="100">
         <div class="button-row">
             <!-- Run Simulation 버튼 -->
