@@ -62,7 +62,8 @@ def prepare_simulation_data(data_dir='./app/data'):
         event_duration[i] = {"value": [1], "pdf": [1]}
 
     # resource_pdf = pickle.load(open(os.path.join(data_dir, 'activity_resource_hussh.pickle'), 'rb'))
-    resource_pdf = pickle.load(open(os.path.join(data_dir, 'activity_resource_detailed.pickle'), 'rb'))
+    # resource_pdf = pickle.load(open(os.path.join(data_dir, 'activity_resource_detailed.pickle'), 'rb'))
+    resource_pdf = pickle.load(open(os.path.join(data_dir, 'activity_resource_detailed2.pickle'), 'rb'))
     trans_time = pd.read_csv(os.path.join(data_dir, 'transition_time_hussh.csv'))
     trans_time.set_index(['new_activity', 'next_act'], inplace=True)
 
@@ -111,16 +112,6 @@ def load_and_prepare_data(remove_activity=None, resequence_pair=None):
     variants_list = find_nearest_variant(case_variant, df_date)
     df_date_re = pd.concat([df_date, df_v.loc[case_variant['case_id'].loc[variants_list]].reset_index(drop=True)], axis=1)
     
-    # if resequence_pair:
-    #     print(resequence_pair)
-    #     a, b = resequence_pair
-    #     def swap_order(v):
-    #         v = v.copy()
-    #         if a in v and b in v:
-    #             idx_a, idx_b = v.index(a), v.index(b)
-    #             v[idx_a], v[idx_b] = v[idx_b], v[idx_a]
-    #         return v
-    #     df_date_re['variant'] = df_date_re['variant'].apply(swap_order)
     if resequence_pair:
         pass
 
@@ -130,9 +121,8 @@ def load_and_prepare_data(remove_activity=None, resequence_pair=None):
     for i in ['visit_start', 'visit_end', '퇴실(귀가)', '퇴실(사망)', '퇴실(입원)', '퇴실(전원)']:
         event_duration[i] = {'value': [1], 'pdf': [1]}
 
-    # resource_pdf = pickle.load(open('app/data/activity_resource_hussh.pickle', 'rb'))
-    resource_pdf = pickle.load(open('app/data/activity_resource_detailed.pickle', 'rb'))
-    trans_time = pd.read_csv('app/data/transition_time_hussh.csv')
+    resource_pdf = pickle.load(open('app/data/activity_resource_detailed2.pickle', 'rb'))
+    trans_time = pd.read_csv('data/transition_time_generated.csv')
     trans_time.set_index(['new_activity', 'next_act'], inplace=True)
 
     return df, df_date_re, start_date, event_duration, resource_pdf, trans_time

@@ -3,8 +3,9 @@ import random
 import numpy as np
 
 class Simulator:
-    def __init__(self, name, cases, start_date, arrival_times, event_duration, variants, 
-    resource_pdf, trans_time, resource_config=None, shift_times=None, queue_discipline='FIFO', variant_priority_map=None):
+    def __init__(self, name, cases, start_date, arrival_times, event_duration, variants,
+                 resource_pdf, trans_time, resource_config=None, shift_times=None,
+                 queue_discipline='FIFO', variant_priority_map=None):
         self.name = name
         self.cases = cases
         self.start_date = start_date
@@ -16,72 +17,60 @@ class Simulator:
         self.queue_discipline = queue_discipline
         self.variant_priority_map = variant_priority_map or {}
         self.env = simpy.Environment()
-        print(self.queue_discipline)
-        print(self.variant_priority_map)
-        # 기본 리소스 설정
+
+        # capacity 초기값
         default_config = {
-            'Doctor_shift_1': 34,
-            'Doctor_shift_2': 30,
-            'Nurse_shift_1': 3,
-            'Nurse_shift_2': 7,
-            'Nurse_shift_3': 3
+            'intern_shift_1': 10, 'intern_shift_2': 10,
+            'resident_shift_1': 10, 'resident_shift_2': 10,
+            'specialist_shift_1': 14, 'specialist_shift_2': 10,
+            'junior_shift_1': 2, 'junior_shift_2': 5, 'junior_shift_3': 2,
+            'senior_shift_1': 1, 'senior_shift_2': 2, 'senior_shift_3': 1
         }
-        
-        self.resource_capacities = resource_config if resource_config else default_config
-
-        # 기본 shift 시간 설정 (24시간 기준)
+        self.resource_capacities = resource_config if resource_config else default_config.copy()
+        # print(self.resource_capacities)
+        # shift times
         default_shift_times = {
-            'Doctor_shift_1': (8, 20),
-            'Doctor_shift_2': (20, 8), 
-            'Nurse_shift_1': (6, 14),
-            'Nurse_shift_2': (14, 22),
-            'Nurse_shift_3': (22, 6)
+            'intern_shift_1': (8, 20),
+            'intern_shift_2': (20, 8),
+            'resident_shift_1': (8, 20),
+            'resident_shift_2': (20, 8),
+            'specialist_shift_1': (8, 20),
+            'specialist_shift_2': (20, 8),
+            'junior_shift_1': (6, 14),
+            'junior_shift_2': (14, 22),
+            'junior_shift_3': (22, 6),
+            'senior_shift_1': (6, 14),
+            'senior_shift_2': (14, 22),
+            'senior_shift_3': (22, 6),
         }
-        self.shift_times = shift_times or default_shift_times
-        
+        self.shift_times = shift_times if shift_times else default_shift_times.copy()
+        # print(self.shift_times)
+        # === 동적으로 Store 생성 ===
+        self.store_map = {}
+        for key, cap in self.resource_capacities.items():
+            # key 예: intern_shift_1, junior_doctor_shift_1 등
+            self.store_map[key] = simpy.PriorityStore(self.env, capacity=cap)
 
-        self.doctor_shift_1 = simpy.PriorityStore(self.env, capacity=self.resource_capacities['Doctor_shift_1'])
-        self.doctor_shift_2 = simpy.PriorityStore(self.env, capacity=self.resource_capacities['Doctor_shift_2'])
-        self.nurse_shift_1 = simpy.PriorityStore(self.env, capacity=self.resource_capacities['Nurse_shift_1'])
-        self.nurse_shift_2 = simpy.PriorityStore(self.env, capacity=self.resource_capacities['Nurse_shift_2'])
-        self.nurse_shift_3 = simpy.PriorityStore(self.env, capacity=self.resource_capacities['Nurse_shift_3'])
-
-        self.doctor_roles = ['Intern', 'Resident', 'Specialist']
-        self.nurse_roles = ['Junior', 'Senior']
         self.results = []
 
-    def run(self):
-        print(self.name)
-        print(self.queue_discipline)
-        print(self.variant_priority_map)
-        self.env.process(self.MakeStore(self.doctor_shift_1, 'Doctor_shift_1', self.resource_capacities['Doctor_shift_1']))
-        self.env.process(self.MakeStore(self.doctor_shift_2, 'Doctor_shift_2', self.resource_capacities['Doctor_shift_2']))
-        self.env.process(self.MakeStore(self.nurse_shift_1, 'Nurse_shift_1', self.resource_capacities['Nurse_shift_1']))
-        self.env.process(self.MakeStore(self.nurse_shift_2, 'Nurse_shift_2', self.resource_capacities['Nurse_shift_2']))
-        self.env.process(self.MakeStore(self.nurse_shift_3, 'Nurse_shift_3', self.resource_capacities['Nurse_shift_3']))
-
-        for case in self.cases:
-            case_index = self.cases.index(case)
-            time_diff = self.arrival_times[case_index] - self.env.now
-            variant = self.variants[case_index]
-            self.env.process(Activity(self.env, self.doctor_shift_1, self.doctor_shift_2,
-                                      self.nurse_shift_1, self.nurse_shift_2, self.nurse_shift_3,
-                                      self, case_index, variant).run_activity(time_diff, case, variant, 0))
-
-        self.env.run()
-
-    # def MakeStore(self, store, name, capacity):
-    #     for capa in range(capacity):
-    #         yield store.put(f"{name} {capa}")
     def MakeStore(self, store, name, capacity):
-        for capa in range(capacity):
-            if self.queue_discipline == 'LIFO':
-                # 음수 우선순위로 넣기 (나중에 넣은 게 먼저 나감)
-                yield store.put((-capa, f"{name} {capa}"))
-            else:
-                # 기본 FIFO → 우선순위도 기본값 0으로
-                yield store.put((0, f"{name} {capa}"))
+        for c in range(capacity):
+            priority = -c if self.queue_discipline == 'LIFO' else 0
+            yield store.put((priority, f"{name}_{c}"))
 
+    def run(self):
+        # 모든 store 초기화
+        for key, store in self.store_map.items():
+            cap = self.resource_capacities.get(key, 0)
+            self.env.process(self.MakeStore(store, key, cap))
+        # print(len(self.cases), len(self.variants))
+        # 케이스 실행
+        for idx, case in enumerate(self.cases):
+            self.env.process(
+                Activity(self.env, self, idx, self.variants[idx])
+                .run_activity(self.arrival_times[idx] - self.env.now, case, self.variants[idx], 0)
+            )
+        self.env.run()
 
     def record_result(self, patient_id, event, start_time, end_time, resource):
         self.results.append({
@@ -92,141 +81,109 @@ class Simulator:
             'Resource': resource
         })
 
+
 class Activity:
-    def __init__(self, env, doctor_shift_1, doctor_shift_2, nurse_shift_1, nurse_shift_2, nurse_shift_3, simulator, case_id, variant):
+    def __init__(self, env, simulator, case_id, variant):
         self.env = env
-        self.doctor_shift_1 = doctor_shift_1
-        self.doctor_shift_2 = doctor_shift_2
-        self.nurse_shift_1 = nurse_shift_1
-        self.nurse_shift_2 = nurse_shift_2
-        self.nurse_shift_3 = nurse_shift_3
         self.simulator = simulator
-        self.case_id = case_id 
+        self.case_id = case_id
         self.variant = tuple(variant)
         self.ratio = 0.1
-
-    def determine_priority(self):
-        # (원하는 로직으로 변경 가능: triage 점수 등)
-        if self.variant in self.simulator.variant_priority_map:
-            return self.simulator.variant_priority_map[self.variant]
-        return 0
 
     def now_time(self):
         return self.simulator.start_date + np.timedelta64(int(self.env.now), 's')
 
-    # def determine_shift(self, current_time):
-    #     hour = current_time.hour
-    #     doctor_store = self.doctor_shift_1 if 8 <= hour < 20 else self.doctor_shift_2
-    #     if 6 <= hour < 14:
-    #         nurse_store = self.nurse_shift_1
-    #     elif 14 <= hour < 22:
-    #         nurse_store = self.nurse_shift_2
-    #     else:
-    #         nurse_store = self.nurse_shift_3
-    #     return doctor_store, nurse_store
-    
-    def determine_shift(self, current_time):
-        hour = current_time.hour
-        st = self.simulator.shift_times
+    def determine_priority(self):
+        if self.variant in self.simulator.variant_priority_map:
+            return self.simulator.variant_priority_map[self.variant]
+        return 0
 
-        doc_start1, doc_end1 = st['Doctor_shift_1']
-        doctor_store = self.doctor_shift_1 if (
-            doc_start1 < doc_end1 and doc_start1 <= hour < doc_end1 or
-            doc_start1 > doc_end1 and (hour >= doc_start1 or hour < doc_end1)
-        ) else self.doctor_shift_2
-
-        for shift_name, store in [('Nurse_shift_1', self.nurse_shift_1),
-                                ('Nurse_shift_2', self.nurse_shift_2),
-                                ('Nurse_shift_3', self.nurse_shift_3)]:
-            start, end = st[shift_name]
-            if start < end and start <= hour < end:
-                return doctor_store, store
-            elif start > end and (hour >= start or hour < end):  # 예: 22~6
-                return doctor_store, store
-
-        # fallback
-        return doctor_store, self.nurse_shift_1
-
+    def find_store_for_role(self, role, hour):
+        """
+        role 예: Intern, Resident, Specialist, Junior Doctor(merged) 등
+        """
+        role_key = role.lower().replace(' ', '_')  # Intern -> intern, Junior Doctor -> junior_doctor
+        # 시프트 시간들을 확인
+        matches = [k for k in self.simulator.shift_times.keys() if k.startswith(role_key)]
+        if not matches:
+            # 기본 Intern 로직 fallback
+            if role_key.startswith('intern'):
+                return self.simulator.store_map['intern_shift_1'] if 8 <= hour < 20 else self.simulator.store_map['intern_shift_2']
+            if role_key.startswith('resident'):
+                return self.simulator.store_map['resident_shift_1'] if 8 <= hour < 20 else self.simulator.store_map['resident_shift_2']
+            if role_key.startswith('specialist'):
+                return self.simulator.store_map['specialist_shift_1'] if 8 <= hour < 20 else self.simulator.store_map['specialist_shift_2']
+            if role_key.startswith('junior'):
+                if 6 <= hour < 14: return self.simulator.store_map['junior_shift_1']
+                if 14 <= hour < 22: return self.simulator.store_map['junior_shift_2']
+                return self.simulator.store_map['junior_shift_3']
+            if role_key.startswith('senior'):
+                if 6 <= hour < 14: return self.simulator.store_map['senior_shift_1']
+                if 14 <= hour < 22: return self.simulator.store_map['senior_shift_2']
+                return self.simulator.store_map['senior_shift_3']
+        else:
+            # 동적 shift
+            for shift in matches:
+                start, end = self.simulator.shift_times[shift]
+                # 기본적으로 start<end 형태
+                if start < end:
+                    if start <= hour < end:
+                        return self.simulator.store_map[shift]
+                else:
+                    # 야간 교대(예: 20~8)
+                    if hour >= start or hour < end:
+                        return self.simulator.store_map[shift]
+            # 기본 첫 번째 시프트
+            return self.simulator.store_map[matches[0]]
 
     def run_activity(self, time_diff, case, variant, n_index):
         if time_diff > 0:
             yield self.env.timeout(time_diff)
-        try:
-            event = variant[n_index]
-        except:
+
+        # 다음 이벤트 없으면 종료
+        if n_index >= len(variant):
             return
+
+        event = variant[n_index]
         try:
             previous_event = variant[n_index - 1]
             transition_time = self.simulator.trans_time.loc[(previous_event, event)]['trans_time']
-        except:
+        except Exception:
             transition_time = 0.0
-
         yield self.env.timeout(self.ratio * transition_time)
 
-        resource_allocated = False
-        while not resource_allocated:
-            current_time = self.now_time()
-            doctor_store, nurse_store = self.determine_shift(current_time)
-            pdf_info = self.simulator.resource_pdf[event]
-            role_prob = pdf_info['Role_prob']
-            # role = random.choices(['Doctor', 'Nurse'], weights=[role_prob['Doctor'], role_prob['Nurse']], k=1)[0]
-            role = random.choices(['Doctor', 'Nurse'],
-                      weights=[role_prob.get('Doctor', 0.0), role_prob.get('Nurse', 0.0)],
-                      k=1)[0]
-            doc_prob = role_prob.get('Doctor', 0)
-            nurse_prob = role_prob.get('Nurse', 0)
-            if doc_prob > 0 and nurse_prob == 0:
-                role = 'Doctor'
-            elif nurse_prob > 0 and doc_prob == 0:
-                role = 'Nurse'
-            else:
-                # role = random.choices(['Doctor', 'Nurse'], weights=[doc_prob, nurse_prob], k=1)[0]
-                role = random.choices(['Doctor', 'Nurse'],
-                      weights=[role_prob.get('Doctor', 0.0), role_prob.get('Nurse', 0.0)],
-                      k=1)[0]
-            if role == 'Doctor':
-                doc_weights = list(pdf_info['Doctor_pdf'].values())
-                if sum(doc_weights) == 0:
-                    raise ValueError(f"[ERROR] All Doctor weights are zero in event '{event}'. Cannot select role.")
-                selected_role = random.choices(
-                    population=list(pdf_info['Doctor_pdf'].keys()),
-                    weights=list(pdf_info['Doctor_pdf'].values()), k=1
-                )[0]
-                chosen_store = doctor_store
-            else:
-                nur_weights = list(pdf_info['Nurse_pdf'].values())
-                if sum(nur_weights) == 0:
-                    raise ValueError(f"[ERROR] All Nurse weights are zero in event '{event}'. Cannot select role.")
-                selected_role = random.choices(
-                    population=list(pdf_info['Nurse_pdf'].keys()),
-                    weights=list(pdf_info['Nurse_pdf'].values()), k=1
-                )[0]
-                chosen_store = nurse_store
+        # 역할 할당
+        pdf_info = self.simulator.resource_pdf[event]
+        roles = list(pdf_info.keys())
+        weights = list(pdf_info.values())
+        selected_role = random.choices(roles, weights=weights, k=1)[0].replace('_pdf', '')
 
-            resource_allocated = True
+        current_time = self.now_time()  # datetime 또는 Timestamp
+        hour = current_time.hour 
+        store = self.find_store_for_role(selected_role, hour)
 
-        # resource = yield chosen_store.get()
-        priority, resource = yield chosen_store.get()
-
-        event_duration = random.choices(self.simulator.event_duration[event]['value'],
-                                        self.simulator.event_duration[event]['pdf'], k=1)[0]
+        priority, resource = yield store.get()
+        duration = random.choices(
+            self.simulator.event_duration[event]['value'],
+            self.simulator.event_duration[event]['pdf'],
+            k=1
+        )[0]
         start_time = self.now_time()
-        yield self.env.timeout(event_duration)
-        self.simulator.record_result(
-            case, event, start_time, self.now_time(),
-            f"{resource} ({selected_role})"
-        )
-        # yield chosen_store.put(resource)
-        if self.simulator.queue_discipline == 'LIFO':
-            yield chosen_store.put((-priority, resource))
-        elif self.simulator.queue_discipline == 'PRIORITY':
-            # 새로운 priority 계산 가능
-            yield chosen_store.put((self.determine_priority(), resource))
-        else:
-            yield chosen_store.put((priority, resource))
+        yield self.env.timeout(duration)
+        self.simulator.record_result(case, event, start_time, self.now_time(), f"{resource} ({selected_role})")
 
+        # 다시 store에 반환
+        if self.simulator.queue_discipline == 'LIFO':
+            yield store.put((-priority, resource))
+        elif self.simulator.queue_discipline == 'PRIORITY':
+            yield store.put((self.determine_priority(), resource))
+        else:
+            yield store.put((priority, resource))
+
+        # 다음 이벤트로 진행
         return self.env.process(self.run_activity(0, case, variant, n_index + 1))
 
+    
 class Timer:
     def __enter__(self):
         import time

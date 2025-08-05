@@ -1,140 +1,131 @@
 from collections import defaultdict
-def max_median_mean(df):
-    '''
-    각 환자에 대해 체류 시간(마지막 이벤트 종료 시각 - 첫 이벤트 시작 시각)을 계산하고,
-    그에 대한 최대/중앙/평균 값을 반환한다.
-    '''
-    df_temp = df.groupby('Patient_id')['End_time'].apply(list).apply(lambda x: x[-1] - x[0]).reset_index()
-    max_val = df_temp['End_time'].max()
-    median_val = df_temp['End_time'].median()
-    mean_val = df_temp['End_time'].mean()
-
-    return {
-        "max": max_val,
-        "median": median_val,
-        "mean": mean_val
-    }
-
-# def format_resource_usage(df, label, pattern, capacity):
-#     used = df.loc[df.Resource.str.contains(pattern), 'Resource'].nunique()
-#     return f"{used} / {capacity}"
-
-def format_resource_usage(df, pattern, capacity):
-    """
-    리소스 사용량을 고유한 (환자 ID, 시작시간)에 기반하여 계산하고,
-    capacity보다 크지 않게 제한하여 표시.
-    """
-    usage_df = df.loc[df['Resource'].str.contains(pattern)]
-    # 실제 중복 제거된 고유 사용 건수 계산
-    used = usage_df[['Patient_id', 'Start_time']].drop_duplicates().shape[0]
-    used = min(used, capacity)  # capacity 초과 방지
-    # return f"{used} / {capacity}"
-    return f"{used}"
 
 def format_role_usage(df, role_keyword):
-    """
-    역할 문자열 (예: 'Resident', 'Senior')이 Resource에 포함된 횟수를 계산
-    """
     role_df = df[df['Resource'].str.contains(fr"\({role_keyword}\)")]
-    used = role_df[['Patient_id', 'Start_time']].drop_duplicates().shape[0]
+    used = role_df[['Patient_id','Start_time']].drop_duplicates().shape[0]
     return f"{used}"
 
+def format_resource_usage(df, pattern, capacity):
+    usage_df = df.loc[df['Resource'].str.contains(pattern)]
+    used = usage_df[['Patient_id','Start_time']].drop_duplicates().shape[0]
+    used = min(used, capacity)
+    return f"{used}"
 
-def format_result(file_name, result, median_dtp_res, mean_dtp_res, resource_capacities, role_merge=None, shift_times=None):
-    '''
-    시뮬레이션 결과로부터 KPI 지표들을 계산하고 출력 포맷을 리스트로 구성한다.
-    '''
-    # num_patients = result.Patient_id.nunique()
-    # num_docs = result.loc[result.Resource.str.contains('^Doc')]['Resource'].nunique()
-    # num_nurses = result.loc[result.Resource.str.contains('^Nur')]['Resource'].nunique()
+def max_median_mean(df):
+    df_temp = df.groupby('Patient_id')['End_time'].apply(list).apply(lambda x: x[-1]-x[0]).reset_index()
+    return {
+        "max": df_temp['End_time'].max(),
+        "median": df_temp['End_time'].median(),
+        "mean": df_temp['End_time'].mean()
+    }
 
-    # num_doc_1 = result.loc[(result.Resource.str.contains('^Doc')) & (result.Resource.str.contains('shift_1'))]['Resource'].nunique()
-    # num_doc_2 = result.loc[(result.Resource.str.contains('^Doc')) & (result.Resource.str.contains('shift_2'))]['Resource'].nunique()
 
-    # num_nur_1 = result.loc[(result.Resource.str.contains('^Nur')) & (result.Resource.str.contains('shift_1'))]['Resource'].nunique()
-    # num_nur_2 = result.loc[(result.Resource.str.contains('^Nur')) & (result.Resource.str.contains('shift_2'))]['Resource'].nunique()
-    # num_nur_3 = result.loc[(result.Resource.str.contains('^Nur')) & (result.Resource.str.contains('shift_3'))]['Resource'].nunique()
+def format_result(file_name, result, median_dtp_res, mean_dtp_res,
+                   resource_capacities, role_merge=None, shift_times=None):
+    formatted_result = []
+    # print(role_merge)
+    doctor_merged = any(v.lower() == 'junior doctor' for v in (role_merge or {}).values())
+    nurse_merged = any(v.lower() == 'nurse' for v in (role_merge or {}).values())
 
+    # --- 1. Doctor Shifts ---
+    if not doctor_merged:
+        formatted_result.append(("Doctor Shift", ""))  # header
+        formatted_result += [
+            ("Number of Intern Shift 1", str(resource_capacities.get('intern_shift_1', 0))),
+            ("Number of Intern Shift 2", str(resource_capacities.get('intern_shift_2', 0))),
+            ("Number of Resident Shift 1", str(resource_capacities.get('resident_shift_1', 0))),
+            ("Number of Resident Shift 2", str(resource_capacities.get('resident_shift_2', 0))),
+            ("Number of Specialist Shift 1", str(resource_capacities.get('specialist_shift_1', 0))),
+            ("Number of Specialist Shift 2", str(resource_capacities.get('specialist_shift_2', 0))),
+        ]
+    else:
+        formatted_result.append(("Doctor Shift (Merged)", ""))
+        for k in resource_capacities:
+            if k.startswith('junior_doctor_'):
+                print(k)
+                formatted_result.append((f"Number of {k.replace('_', ' ').title()}", str(resource_capacities[k])))
+                print(formatted_result)
+        formatted_result += [
+            ("Number of Specialist Shift 1", str(resource_capacities.get('specialist_shift_1', 0))),
+            ("Number of Specialist Shift 2", str(resource_capacities.get('specialist_shift_2', 0))),
+        ]
+
+    # --- 2. Nurse Shifts ---
+    if not nurse_merged:
+        formatted_result.append(("Nurse Shift", ""))  # header
+        formatted_result += [
+            ("Number of Junior Shift 1", str(resource_capacities.get('junior_shift_1', 0))),
+            ("Number of Junior Shift 2", str(resource_capacities.get('junior_shift_2', 0))),
+            ("Number of Junior Shift 3", str(resource_capacities.get('junior_shift_3', 0))),
+            ("Number of Senior Shift 1", str(resource_capacities.get('senior_shift_1', 0))),
+            ("Number of Senior Shift 2", str(resource_capacities.get('senior_shift_2', 0))),
+            ("Number of Senior Shift 3", str(resource_capacities.get('senior_shift_3', 0))),
+        ]
+    else:
+        formatted_result.append(("Nurse Shift (Merged)", ""))  # header
+        for k in resource_capacities:
+            if k.startswith('nurse_'):
+                formatted_result.append((f"Number of {k.replace('_', ' ').title()}", str(resource_capacities[k])))
+
+    # --- 3. Waiting Time ---
+    formatted_result.append(("Waiting Time", ""))  # header
     median_waiting = round(median_dtp_res.total_seconds() / 60, 2)
     mean_waiting = round(mean_dtp_res.total_seconds() / 60, 2)
-
-    case_duration = max_median_mean(result)
-
-    # formatted_result = [
-    #     ("File Name", file_name),
-    #     ("Number of Patients", num_patients),
-    #     ("Number of Doctors", num_docs),
-    #     ("Number of Nurses", num_nurses),
-
-    #     ("Number of Doctors in shift_1", num_doc_1),
-    #     ("Number of Doctors in shift_2", num_doc_2),
-
-    #     ("Number of Nurses in shift_1", num_nur_1),
-    #     ("Number of Nurses in shift_2", num_nur_2),
-    #     ("Number of Nurses in shift_3", num_nur_3),
-
-    #     ("Median Waiting Time (minutes)", median_waiting),
-    #     ("Mean Waiting Time (minutes)", mean_waiting),
-
-    #     ("Case Duration (max)", case_duration['max']),
-    #     ("Case Duration (median)", case_duration['median']),
-    #     ("Case Duration (mean)", case_duration['mean'])
-    # ]
-    # formatted_result = [
-    #     ("Number of Doctors", format_resource_usage(result, 'Doctor', '^Doc', 64)),
-    #     ("Number of Nurses", format_resource_usage(result, 'Nurse', '^Nur', 13)),
-    #     ("Number of Doctors in shift_1", format_resource_usage(result, 'Doctor_shift_1', 'Doc.*shift_1', 34)),
-    #     ("Number of Doctors in shift_2", format_resource_usage(result, 'Doctor_shift_2', 'Doc.*shift_2', 30)),
-    #     ("Number of Nurses in shift_1", format_resource_usage(result, 'Nurse_shift_1', 'Nur.*shift_1', 3)),
-    #     ("Number of Nurses in shift_2", format_resource_usage(result, 'Nurse_shift_2', 'Nur.*shift_2', 7)),
-    #     ("Number of Nurses in shift_3", format_resource_usage(result, 'Nurse_shift_3', 'Nur.*shift_3', 3)),
-
-    #     ("Median Waiting Time (minutes)", median_waiting),
-    #     ("Mean Waiting Time (minutes)", mean_waiting),
-
-    #     ("Case Duration (max)", case_duration['max']),
-    #     ("Case Duration (median)", case_duration['median']),
-    #     ("Case Duration (mean)", case_duration['mean'])
-    # ]
-
-    formatted_result = [
-        ("Number of Doctors", format_resource_usage(result, '^Doc', resource_capacities['Doctor_shift_1'] + resource_capacities['Doctor_shift_2'])),
-        ("Number of Nurses", format_resource_usage(result, '^Nur', resource_capacities['Nurse_shift_1'] + resource_capacities['Nurse_shift_2'] + resource_capacities['Nurse_shift_3'])),
-        ("Number of Doctors in shift_1", format_resource_usage(result, 'Doc.*shift_1', resource_capacities['Doctor_shift_1'])),
-        ("Number of Doctors in shift_2", format_resource_usage(result, 'Doc.*shift_2', resource_capacities['Doctor_shift_2'])),
-        ("Number of Nurses in shift_1", format_resource_usage(result, 'Nur.*shift_1', resource_capacities['Nurse_shift_1'])),
-        ("Number of Nurses in shift_2", format_resource_usage(result, 'Nur.*shift_2', resource_capacities['Nurse_shift_2'])),
-        ("Number of Nurses in shift_3", format_resource_usage(result, 'Nur.*shift_3', resource_capacities['Nurse_shift_3'])),
-        # 역할별 의사
-        ("→ Intern usage", format_role_usage(result, 'Intern')),
-        ("→ Resident usage", format_role_usage(result, 'Resident')),
-        ("→ Specialist usage", format_role_usage(result, 'Specialist')),
-
-        # 역할별 간호사
-        ("→ Junior Nurse usage", format_role_usage(result, 'Junior')),
-        ("→ Senior Nurse usage", format_role_usage(result, 'Senior')),
-    ]
-    if role_merge:
-        reverse_merge = defaultdict(list)
-        for original, merged in role_merge.items():
-            reverse_merge[merged].append(original)
-
-        for merged_role, _ in reverse_merge.items():
-            merged_usage = format_role_usage(result, merged_role)
-            formatted_result.append((f"→ {merged_role} (merged)", merged_usage))
-
     formatted_result += [
         ("Median Waiting Time (minutes)", median_waiting),
         ("Mean Waiting Time (minutes)", mean_waiting),
+    ]
+
+    # --- 4. Duration Time ---
+    formatted_result.append(("Duration Time", ""))  # header
+    case_duration = max_median_mean(result)
+    formatted_result += [
         ("Case Duration (max)", case_duration['max']),
         ("Case Duration (median)", case_duration['median']),
-        ("Case Duration (mean)", case_duration['mean'])
+        ("Case Duration (mean)", case_duration['mean']),
     ]
+    # ========================
+    # 5) Shift time 정보
+    # ========================
+    # print(shift_times)
     if shift_times:
-        for role, shifts in shift_times.items():
-            for shift_name, (start, end) in shifts.items():
-                formatted_result.append((
-                    f"{role} {shift_name} time",
-                    f"{start}시 ~ {end}시"
-                ))
+        # --- Doctor Shifts 출력 여부 ---
+        show_doctor_shifts = not doctor_merged and any(
+            k.startswith(('intern_', 'resident_', 'specialist_')) for k in shift_times
+        )
+        if show_doctor_shifts:
+            formatted_result.append(("Doctor Shift Time", ""))
+            for key, (start, end) in shift_times.items():
+                if key.startswith(('intern_', 'resident_', 'specialist_')):
+                    formatted_result.append((f"{key} time", f"{start}시~{end}시"))
+
+        # --- Nurse Shifts 출력 여부 ---
+        show_nurse_shifts = not nurse_merged and any(
+            k.startswith(('junior_', 'senior_')) for k in shift_times
+        )
+        if show_nurse_shifts:
+            formatted_result.append(("Nurse Shift Time", ""))
+            for key, (start, end) in shift_times.items():
+                if key.startswith(('junior_', 'senior_')):
+                    formatted_result.append((f"{key} time", f"{start}시~{end}시"))
+
+        if doctor_merged:
+            formatted_result.append(("Doctor Shift Time (Merged)", ""))
+            for key in shift_times:
+                if key.startswith('junior_doctor_'):
+                    start, end = shift_times[key]
+                    formatted_result.append((f"{key} time", f"{start}시~{end}시"))
+
+        if nurse_merged:
+            formatted_result.append(("Nurse Shift Time (Merged)", ""))
+            for key in shift_times:
+                if key.startswith('nurse_'):
+                    start, end = shift_times[key]
+                    formatted_result.append((f"{key} time", f"{start}시~{end}시"))
+
+
     return formatted_result
+
+
+
+
