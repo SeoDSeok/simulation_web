@@ -40,6 +40,10 @@
         .button:hover {
             background-color: #0056b3;
         }
+        .delta { margin-left:6px; font-size:.85em; white-space:nowrap; }
+        .delta.pos { color:#2c7; }
+        .delta.neg { color:#d33; }
+        .delta.neu { color:#888; }
     </style>
 </head>
 <body>
@@ -64,7 +68,7 @@
                   {% else %}
                       <tr>
                           {% for value in row %}
-                              <td>{{ value }}</td>
+                              <td>{{ value|safe}}</td>
                           {% endfor %}
                       </tr>
                   {% endif %}

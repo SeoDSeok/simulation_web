@@ -7,6 +7,8 @@ from urllib.parse import urlencode
 import pandas as pd
 import pickle
 from copy import deepcopy
+import re
+from datetime import timedelta
 
 scenario = Blueprint('scenario', __name__)
 
@@ -89,6 +91,43 @@ def apply_multiplier(base_cases, base_arrivals, base_variants, multiplier):
         offset_arrivals.append(offset_time)
 
     return custom_cases, offset_arrivals, custom_variants
+
+def _to_number_or_minutes(v):
+    """
+    KPI 값이 숫자(str/int/float)거나 '0 days HH:MM:SS(.ms)' 같은 시간일 때
+    비교 가능한 수치로 변환. 시간은 '분' 단위 float로 반환.
+    변환 불가하면 None.
+    """
+    if v is None:
+        return None
+
+    if isinstance(v, (int, float)):
+        return float(v)
+
+    s = str(v).strip()
+    try:
+        return float(s)
+    except Exception:
+        pass
+
+    m = re.match(r'(?:(\d+)\s*days?\s*)?(\d{1,2}):(\d{2}):(\d{2})(?:\.\d+)?$', s)
+    if m:
+        days = int(m.group(1) or 0)
+        h, mi, sec = int(m.group(2)), int(m.group(3)), int(m.group(4))
+        td = timedelta(days=days, hours=h, minutes=mi, seconds=sec)
+        return td.total_seconds() / 60.0
+
+    return None
+
+def _fmt_delta(delta, pct):
+    if delta is None:
+        return ""
+    cls = "pos" if delta > 0 else ("neg" if delta < 0 else "neu")
+    sign = "▲" if delta > 0 else ("▼" if delta < 0 else "–")
+    abs_val = abs(delta)
+    pct_txt = f" ({pct:+.1f}%)" if pct is not None else ""
+    return f"<span class='delta {cls}'>{sign} {abs_val:.2f}{pct_txt}</span>"
+
 # 시나리오 JSON 파일 로드
 def load_scenarios():
     with open(os.path.join('app', 'data', 'scenario_map.json'), 'r', encoding='utf-8') as f:
@@ -1549,25 +1588,7 @@ def add_to_stack():
         params['selected_activity'] = selected_activity
         params['new_orders'] = new_orders
 
-    elif scenario_id == 'reallocating':
-        # Intern
-        params['intern_shift_1'] = int(request.form.get('intern_shift_1', 0))
-        params['intern_shift_2'] = int(request.form.get('intern_shift_2', 0))
-        # Resident
-        params['resident_shift_1'] = int(request.form.get('resident_shift_1', 0))
-        params['resident_shift_2'] = int(request.form.get('resident_shift_2', 0))
-        # Specialist
-        params['specialist_shift_1'] = int(request.form.get('specialist_shift_1', 0))
-        params['specialist_shift_2'] = int(request.form.get('specialist_shift_2', 0))
-        # Junior Nurse
-        params['junior_shift_1'] = int(request.form.get('junior_shift_1', 0))
-        params['junior_shift_2'] = int(request.form.get('junior_shift_2', 0))
-        params['junior_shift_3'] = int(request.form.get('junior_shift_3', 0))
-        # Senior Nurse
-        params['senior_shift_1'] = int(request.form.get('senior_shift_1', 0))
-        params['senior_shift_2'] = int(request.form.get('senior_shift_2', 0))
-        params['senior_shift_3'] = int(request.form.get('senior_shift_3', 0))
-    elif scenario_id == 'adding_staff':
+    elif scenario_id in ('reallocating', 'adding_staff'):
         # Intern
         params['intern_shift_1'] = int(request.form.get('intern_shift_1', 0))
         params['intern_shift_2'] = int(request.form.get('intern_shift_2', 0))
@@ -1586,6 +1607,7 @@ def add_to_stack():
         params['senior_shift_2'] = int(request.form.get('senior_shift_2', 0))
         params['senior_shift_3'] = int(request.form.get('senior_shift_3', 0))
     elif scenario_id == 'rostering':
+        print(request.form)
         # Intern
         params['intern_shift_1'] = int(request.form.get('Intern_shift_1', 0))
         params['intern_shift_2'] = int(request.form.get('Intern_shift_2', 0))
@@ -1812,29 +1834,80 @@ def run_stack():
     current_cases = base_sim.cases
     current_arrivals = base_sim.arrival_times
 
+    staff_keys = [
+        'Intern_shift_1','Intern_shift_2',
+        'Resident_shift_1','Resident_shift_2',
+        'Specialist_shift_1','Specialist_shift_2',
+        'Junior_shift_1','Junior_shift_2','Junior_shift_3',
+        'Senior_shift_1','Senior_shift_2','Senior_shift_3',
+    ]
+    current_staff_overrides: dict[str, int] = {}
+    current_role_merge: dict[str, str] = {}
+    current_shift_times: dict[str, tuple[int, int]] | None = None
+    
+    def _extract_staff_overrides(params: dict) -> dict[str, int]:
+        """
+        form/stack에 들어온 키가 intern_shift_1 또는 Intern_shift_1 둘 다 오더라도
+        simulate_from_loader가 기대하는 TitleCase 키로 통일해서 반환.
+        """
+        result = {}
+        roles = [
+            ('intern',     [1, 2]),
+            ('resident',   [1, 2]),
+            ('specialist', [1, 2]),
+            ('junior',     [1, 2, 3]),
+            ('senior',     [1, 2, 3]),
+        ]
+        for role, shifts in roles:
+            for s in shifts:
+                lower = f'{role}_shift_{s}'
+                title = f'{role.capitalize()}_shift_{s}'
+                key_present = None
+                if lower in params: key_present = lower
+                if title in params: key_present = title if key_present is None else key_present
+                if key_present is not None:
+                    try:
+                        val = int(params[key_present])
+                    except (ValueError, TypeError):
+                        continue
+                    result[title] = val   # 반드시 TitleCase로 보관
+        return result
+
+    def call_sim_with_overrides(**kwargs):
+        """항상 누적된 overrides를 함께 전달"""
+        base_kwargs = dict(
+            custom_variants=current_variants,
+            custom_cases=current_cases,
+            custom_arrival_times=current_arrivals,
+            **current_staff_overrides
+        )
+        # role_merge/shift_times는 설정된 경우에만 전달
+        if current_role_merge:
+            base_kwargs['role_merge'] = current_role_merge
+        if current_shift_times:
+            base_kwargs['shift_times'] = current_shift_times
+        base_kwargs.update(kwargs)
+        return simulate_from_loader(**base_kwargs)
+
+
     step_names = ["Base"]
     kpi_snapshots = [dict(base_kpis)]
 
     for step in stack:
+        stype = step['type']
+        params = step.get('params', {})
         sim = None
 
-        if step['type'] == 'remove_activity':
-            activity_to_remove = step['params'].get('activity')
-            sim = simulate_from_loader(
-                remove_activity=activity_to_remove,
-                custom_variants=current_variants,
-                custom_cases=current_cases,
-                custom_arrival_times=current_arrivals
-            )
+        if stype == 'remove_activity':
+            sim = call_sim_with_overrides(remove_activity=params.get('activity'))
 
-        elif step['type'] == 'resequence_activity':
+        elif stype == 'resequence_activity':
             print(step['params'])
             # 1. 전체 variant 불러오기
             df_date_re = pickle.load(open('app/data/df_date_re.pkl', 'rb'))
             all_variants = df_date_re['variant'].tolist()
 
             # 2. Stack에서 전달된 파라미터 꺼내기
-            selected_activity = step['params'].get('selected_activity')
             new_orders = step['params'].get('new_orders', {})
             top_n = len(new_orders)
 
@@ -1866,98 +1939,22 @@ def run_stack():
                     updated_variants.append(v)
 
             # 시뮬레이션 실행 (누적된 current_cases / current_arrivals 사용)
-            sim = simulate_from_loader(
-                custom_variants=updated_variants,
-                custom_cases=current_cases,
-                custom_arrival_times=current_arrivals
-            )
+            sim = call_sim_with_overrides(custom_variants=updated_variants)
 
-        elif step['type'] == 'reallocating':
-            sim = simulate_from_loader(
-                custom_variants=current_variants,
-                custom_cases=current_cases,
-                custom_arrival_times=current_arrivals,
-                # Doctors
-                Intern_shift_1=step['params'].get('intern_shift_1', 0),
-                Intern_shift_2=step['params'].get('intern_shift_2', 0),
-                Resident_shift_1=step['params'].get('resident_shift_1', 0),
-                Resident_shift_2=step['params'].get('resident_shift_2', 0),
-                Specialist_shift_1=step['params'].get('specialist_shift_1', 0),
-                Specialist_shift_2=step['params'].get('specialist_shift_2', 0),
+        elif stype in ('reallocating', 'adding_staff', 'rostering'):
+            step_staff = _extract_staff_overrides(params)
+            if step_staff:
+                current_staff_overrides.update(step_staff)
+            print(current_staff_overrides)
+            sim = call_sim_with_overrides()
 
-                # Nurses
-                Junior_shift_1=step['params'].get('junior_shift_1', 0),
-                Junior_shift_2=step['params'].get('junior_shift_2', 0),
-                Junior_shift_3=step['params'].get('junior_shift_3', 0),
-                Senior_shift_1=step['params'].get('senior_shift_1', 0),
-                Senior_shift_2=step['params'].get('senior_shift_2', 0),
-                Senior_shift_3=step['params'].get('senior_shift_3', 0),
-            )
+        elif stype == 'vary_the_assignment':
+            sim = call_sim_with_overrides(role_override=params.get('role_override', {}))
 
-        elif step['type'] == 'adding_staff':
+        elif stype == 'vary_task_comp':
+            sim = call_sim_with_overrides(task_composition=params.get('task_composition', {}))
 
-            sim = simulate_from_loader(
-                custom_variants=current_variants,
-                custom_cases=current_cases,
-                custom_arrival_times=current_arrivals,
-
-                # Doctors
-                Intern_shift_1=step['params'].get('intern_shift_1', 0),
-                Intern_shift_2=step['params'].get('intern_shift_2', 0),
-                Resident_shift_1=step['params'].get('resident_shift_1', 0),
-                Resident_shift_2=step['params'].get('resident_shift_2', 0),
-                Specialist_shift_1=step['params'].get('specialist_shift_1', 0),
-                Specialist_shift_2=step['params'].get('specialist_shift_2', 0),
-
-                # Nurses
-                Junior_shift_1=step['params'].get('junior_shift_1', 0),
-                Junior_shift_2=step['params'].get('junior_shift_2', 0),
-                Junior_shift_3=step['params'].get('junior_shift_3', 0),
-                Senior_shift_1=step['params'].get('senior_shift_1', 0),
-                Senior_shift_2=step['params'].get('senior_shift_2', 0),
-                Senior_shift_3=step['params'].get('senior_shift_3', 0),
-            )
-
-        elif step['type'] == 'rostering':
-            sim = simulate_from_loader(
-                custom_variants=current_variants,
-                custom_cases=current_cases,
-                custom_arrival_times=current_arrivals,
-                # Doctors
-                Intern_shift_1=step['params'].get('intern_shift_1', 0),
-                Intern_shift_2=step['params'].get('intern_shift_2', 0),
-                Resident_shift_1=step['params'].get('resident_shift_1', 0),
-                Resident_shift_2=step['params'].get('resident_shift_2', 0),
-                Specialist_shift_1=step['params'].get('specialist_shift_1', 0),
-                Specialist_shift_2=step['params'].get('specialist_shift_2', 0),
-
-                # Nurses
-                Junior_shift_1=step['params'].get('junior_shift_1', 0),
-                Junior_shift_2=step['params'].get('junior_shift_2', 0),
-                Junior_shift_3=step['params'].get('junior_shift_3', 0),
-                Senior_shift_1=step['params'].get('senior_shift_1', 0),
-                Senior_shift_2=step['params'].get('senior_shift_2', 0),
-                Senior_shift_3=step['params'].get('senior_shift_3', 0),
-            )
-
-        elif step['type'] == 'vary_the_assignment':
-            sim = simulate_from_loader(
-                custom_variants=current_variants,
-                custom_cases=current_cases,
-                custom_arrival_times=current_arrivals,
-                role_override=step['params'].get('role_override', {})
-            )
-
-        elif step['type'] == 'vary_task_comp':
-            sim = simulate_from_loader(
-                custom_variants=current_variants,
-                custom_cases=current_cases,
-                custom_arrival_times=current_arrivals,
-                task_composition=step['params'].get('task_composition', {})
-            )
-
-        elif step['type'] == 'merg_role':
-            print(step['params'])
+        elif stype == 'merg_role':
             merged_roles = step['params'].get('role_merge', {})
 
             # shift_times가 None이면 기본값 사용
@@ -1979,9 +1976,10 @@ def run_stack():
                 for k, v in shift_times.items()
             }
 
-            sim = simulate_from_loader(role_merge=merged_roles, shift_times=parsed_shift_times)
+            # sim = simulate_from_loader(role_merge=merged_roles, shift_times=parsed_shift_times)
+            sim = call_sim_with_overrides()
 
-        elif step['type'] == 'add_new_activity':
+        elif stype == 'add_new_activity':
 
             new_variants = [list(v) for v in current_variants]
             new_act = step['params'].get('new_activity')
@@ -2049,7 +2047,7 @@ def run_stack():
                 trans_time=trans_time
             )
 
-        elif step['type'] == 'reduce_time':
+        elif stype == 'reduce_time':
             prev = step['params'].get('prev_activity')
             next_ = step['params'].get('next_activity')
             new_time = step['params'].get('new_trans_time')
@@ -2063,24 +2061,14 @@ def run_stack():
                 except ValueError:
                     pass
 
-            # 시뮬레이션 실행
-            sim = simulate_from_loader(
-                custom_variants=current_variants,
-                custom_cases=current_cases,
-                custom_arrival_times=current_arrivals,
-                trans_time=modified_transitions
-            )
+            sim = call_sim_with_overrides(trans_time=modified_transitions)
 
-        elif step['type'] == 'vary_patient_demand':
+        elif stype == 'vary_patient_demand':
             multiplier = step['params'].get('demand_multiplier', 100)
             custom_cases, custom_arrivals, custom_variants = apply_multiplier(current_cases, current_arrivals, current_variants, multiplier)
-            sim = simulate_from_loader(
-                custom_cases=custom_cases,
-                custom_arrival_times=custom_arrivals,
-                custom_variants=custom_variants
-            )
+            sim = call_sim_with_overrides(custom_cases=custom_cases, custom_arrival_times=custom_arrivals, custom_variants=custom_variants)
 
-        elif step['type'] == 'vary_patient_sequences':
+        elif stype == 'vary_patient_sequences':
             raw_map = step['params'].get('modified_map', {})
             new_variants = []
             for v in current_variants:
@@ -2089,25 +2077,15 @@ def run_stack():
                     new_variants.append(raw_map[t])
                 else:
                     new_variants.append(v)
-            sim = simulate_from_loader(
-                custom_variants=new_variants,
-                custom_cases=current_cases,
-                custom_arrival_times=current_arrivals
-            )
+            sim = call_sim_with_overrides(custom_variants=new_variants)
 
-        elif step['type'] == 'vary_queue_discipline':
+        elif stype == 'vary_queue_discipline':
             discipline = step['params'].get('queue_discipline', 'FIFO')
             v_map_raw = step['params'].get('variant_priority_map', None)
             variant_priority_map = None
             if v_map_raw:
                 variant_priority_map = {tuple(k.split(',')): v for k, v in v_map_raw.items()}
-            sim = simulate_from_loader(
-                queue_discipline=discipline,
-                variant_priority_map=variant_priority_map,
-                custom_variants=current_variants,
-                custom_cases=current_cases,
-                custom_arrival_times=current_arrivals
-            )
+            sim = call_sim_with_overrides(queue_discipline=discipline, variant_priority_map=variant_priority_map)
 
         if sim:
             print(step['params'])
@@ -2119,7 +2097,7 @@ def run_stack():
             df['Activity'] = df['Activity'].str.replace(r'(_\d+)$', '', regex=True)
 
             kpis = formatter.format_result(
-                step['type'],
+                stype,
                 df,
                 df.groupby('Patient_id')['Start_time'].apply(lambda x: safe_diff(x, 2, 1)).median(),
                 df.groupby('Patient_id')['Start_time'].apply(lambda x: safe_diff(x, 2, 1)).mean(),
@@ -2128,17 +2106,14 @@ def run_stack():
                 shift_times=step.get('params', {}).get('shift_times')
             )
 
-            step_names.append(step['type'])
+            step_names.append(stype)
             kpi_snapshots.append(dict(kpis))
 
     preferred_order = [
         # Doctor Shift
-        "Number of Intern Shift 1",
-        "Number of Intern Shift 2",
-        "Number of Resident Shift 1",
-        "Number of Resident Shift 2",
-        "Number of Specialist Shift 1",
-        "Number of Specialist Shift 2",
+        "Number of Intern Shift 1", "Number of Intern Shift 2",
+        "Number of Resident Shift 1", "Number of Resident Shift 2",
+        "Number of Specialist Shift 1", "Number of Specialist Shift 2",
 
         # Nurse Shift
         "Number of Junior Shift 1",
@@ -2165,19 +2140,38 @@ def run_stack():
         "Case Duration (max)": "Duration Time"
     }
 
-    comparison_kpis = []
+    base_map = kpi_snapshots[0]  # "Base"가 0번째
 
+    comparison_kpis = []
     prev_section = None
+
     for label in preferred_order:
-        current_section = section_headers.get(label, None)
+        current_section = section_headers.get(label)
         if current_section and current_section != prev_section:
-            # 헤더 행 추가 (빈 칸 채우기 포함)
             comparison_kpis.append([f"<b>{current_section}</b>"] + [""] * len(kpi_snapshots))
             prev_section = current_section
 
         row = [label]
-        for snap in kpi_snapshots:
-            row.append(snap.get(label, ''))
+
+        for i, snap in enumerate(kpi_snapshots):
+            val = snap.get(label, '')
+            cell = str(val)
+
+            if i == 0:
+                row.append(cell)
+            else:
+                prev_val = kpi_snapshots[i-1].get(label, '')
+                prev_num = _to_number_or_minutes(prev_val)
+                curr_num = _to_number_or_minutes(val)
+
+                delta_txt = ""
+                if (prev_num is not None) and (curr_num is not None):
+                    delta = curr_num - prev_num
+                    pct = (delta / prev_num * 100.0) if prev_num not in (0, None) else None
+                    delta_txt = f" <small class='delta'>{_fmt_delta(delta, pct)}</small>"
+
+                row.append(cell + delta_txt)
+
         comparison_kpis.append(row)
 
     return render_template(
