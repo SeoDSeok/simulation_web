@@ -11,7 +11,7 @@ import os
 
 main = Blueprint('main', __name__)
 
-UPLOAD_FOLDER = "./data"
+UPLOAD_FOLDER = "app/data"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @main.route('/')
@@ -46,7 +46,7 @@ def generate_parameter_files(raw_param_path):
         result_rows.append(row)
 
     result_df = pd.DataFrame(result_rows)
-    activity_frequency_path = "./data/activity_fre-hussh_generated.csv"
+    activity_frequency_path = "app/data/activity_fre-hussh_generated.csv"
     result_df.to_csv(activity_frequency_path, index=False, encoding="utf-8-sig")
 
     # event duration 
@@ -84,7 +84,7 @@ def generate_parameter_files(raw_param_path):
             'value': value,
             'pdf': pdf
         }
-    event_duration_path = "./data/event_duration_generated.pickle"
+    event_duration_path = "app/data/event_duration_generated.pickle"
     with open(event_duration_path, "wb") as f:
         pickle.dump(event_duration_dict, f)
 
@@ -121,7 +121,7 @@ def generate_parameter_files(raw_param_path):
         resource_pdf[activity] = role_dict
 
 
-    activity_resource_path = './data/activity_resource_generated.pickle'
+    activity_resource_path = 'app/data/activity_resource_generated.pickle'
     with open(activity_resource_path, 'wb') as f:
         pickle.dump(resource_pdf, f)
 
@@ -148,7 +148,7 @@ def generate_parameter_files(raw_param_path):
 
     result_df = trans_df.groupby(['new_activity', 'next_act'], as_index=False)['trans_time'].mean()
 
-    transition_time_path = "./data/transition_time_generated.csv"
+    transition_time_path = "app/data/transition_time_generated.csv"
     result_df.to_csv(transition_time_path, index=False, encoding='utf-8-sig')
 
     return activity_frequency_path, event_duration_path, activity_resource_path, transition_time_path
