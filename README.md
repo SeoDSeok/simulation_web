@@ -5,8 +5,8 @@ Simulation web page in hospital process
 
 1. Create and activate a Python virtual environment:
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+conda create -n simulation_web python=3.11
+conda activate simulation_web
 ```
 
 2. Install dependencies:
