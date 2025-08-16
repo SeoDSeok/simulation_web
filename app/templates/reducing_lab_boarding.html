@@ -170,7 +170,6 @@
             <th>Median (min)</th>
             <th>p90 (min)</th>
             <th>p95 (min)</th>
-            <th>Immediate?</th>
         </tr>
         </thead>
         <tbody></tbody>
@@ -270,8 +269,6 @@
                 return;
             }
 
-            // transitionMap을 이용해 '바로 다음' 여부 표시
-            const immediateMap = transitionMap?.[fromAct] || {};
 
             toKeys.forEach(toAct => {
                 const s = stats[toAct];
@@ -284,7 +281,6 @@
                 <td>${(s.median ?? 0).toFixed(2)}</td>
                 <td>${s.p90 != null ? s.p90.toFixed(2) : '-'}</td>
                 <td>${s.p95 != null ? s.p95.toFixed(2) : '-'}</td>
-                <td>${(toAct in immediateMap) ? 'O' : ''}</td>
                 `;
                 tbody.appendChild(tr);
             });
