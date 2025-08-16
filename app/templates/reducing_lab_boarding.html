@@ -156,6 +156,27 @@
             <button type="button" class="stack-btn" onclick="submitStack()">➕ Add to Stack</button>
         </div>
     </form>
+
+    <div id="followingPanel" style="display:none; width:800px; background:#fff; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.08); margin-bottom:24px;">
+    <h3 style="margin-top:0;">🔎 Following Activities (Observed)</h3>
+    <div id="followingStatus" style="color:#666; font-size:14px;">Pick a base activity.</div>
+    <table id="followingTable" class="change-matrix" style="margin-top:10px; display:none;">
+        <thead>
+        <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Count</th>
+            <th>Mean (min)</th>
+            <th>Median (min)</th>
+            <th>p90 (min)</th>
+            <th>p95 (min)</th>
+            <th>Immediate?</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    </div>
+
   
       <a href="{{ url_for('scenario.scenario_map') }}">← Back to Scenario Map</a>
   
@@ -214,6 +235,69 @@
         const transitionMap = JSON.parse(
             document.getElementById('transition-map-json').textContent
         );
+        async function fetchFollowingStats(fromAct){
+            if(!fromAct) return null;
+            const url = "{{ url_for('scenario.following_stats') }}" + `?from=${encodeURIComponent(fromAct)}`;
+            const res = await fetch(url);
+            if(!res.ok) throw new Error('Failed to fetch following stats');
+            return await res.json(); // { from, stats: {to: {count,mean,median,p90,p95}, ...} }
+        }
+
+        async function refreshFollowingPanel(){
+            const fromAct = document.getElementById('prevActivitySelect').value;
+            const panel = document.getElementById('followingPanel');
+            const status= document.getElementById('followingStatus');
+            const table = document.getElementById('followingTable');
+            const tbody = table.querySelector('tbody');
+
+            if(!fromAct){
+            panel.style.display = 'none';
+            return;
+            }
+
+            panel.style.display = 'block';
+            status.textContent = 'Loading...';
+            table.style.display = 'none';
+            tbody.innerHTML = '';
+
+            try{
+            const data = await fetchFollowingStats(fromAct);
+            const stats = (data && data.stats) ? data.stats : {};
+            const toKeys = Object.keys(stats).sort();
+
+            if(toKeys.length === 0){
+                status.textContent = 'No observations for this base activity.';
+                return;
+            }
+
+            // transitionMap을 이용해 '바로 다음' 여부 표시
+            const immediateMap = transitionMap?.[fromAct] || {};
+
+            toKeys.forEach(toAct => {
+                const s = stats[toAct];
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td>${fromAct}</td>
+                <td>${toAct}</td>
+                <td>${s.count}</td>
+                <td>${(s.mean ?? 0).toFixed(2)}</td>
+                <td>${(s.median ?? 0).toFixed(2)}</td>
+                <td>${s.p90 != null ? s.p90.toFixed(2) : '-'}</td>
+                <td>${s.p95 != null ? s.p95.toFixed(2) : '-'}</td>
+                <td>${(toAct in immediateMap) ? 'O' : ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            status.textContent = `Observed following activities for "${fromAct}"`;
+            table.style.display = 'table';
+            }catch(e){
+            console.error(e);
+            status.textContent = 'Failed to load.';
+            table.style.display = 'none';
+            }
+        }
+
 
         function showNextOptions() {
             const prevSelect = document.getElementById("prevActivitySelect");
@@ -233,6 +317,8 @@
             } else {
                 nextBox.style.display = 'none';
             }
+
+            refreshFollowingPanel();
         }
         function submitStack() {
             const stackForm = document.getElementById('stackForm');
@@ -270,6 +356,7 @@
             // submit
             stackForm.submit();
         }
+        
     </script>
   </body>
 </html>

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 import json
 import os
 from app.simulator import formatter
@@ -9,8 +9,69 @@ import pickle
 from copy import deepcopy
 import re
 from datetime import timedelta
+import numpy as np
 
 scenario = Blueprint('scenario', __name__)
+
+def compute_following_intervals_end_to_start(df: pd.DataFrame,
+                                             act_col: str = "new_activity",
+                                             start_col: str = "starttime",
+                                             end_col: str = "endtime",
+                                             case_col: str = "case_id") -> pd.DataFrame:
+    """
+    각 케이스 타임라인에서 i번째 액티비티 end → j번째 액티비티 start 시간차(분) 계산.
+    반환: ['from', 'to', 'delta_min']
+    """
+    need = {act_col, start_col, end_col, case_col}
+    if not need.issubset(df.columns):
+        missing = need - set(df.columns)
+        raise ValueError(f"Missing columns: {missing}")
+
+    df = df.copy()
+    df[start_col] = pd.to_datetime(df[start_col], errors="coerce")
+    df[end_col]   = pd.to_datetime(df[end_col],   errors="coerce")
+    df = df.sort_values([case_col, start_col])
+
+    rows = []
+    for _, g in df.groupby(case_col, sort=False):
+        acts   = g[act_col].to_numpy()
+        starts = g[start_col].to_numpy(dtype="datetime64[ns]")
+        ends   = g[end_col].to_numpy(dtype="datetime64[ns]")
+        n = len(acts)
+        for i in range(n - 1):
+            deltas = (starts[i+1:] - ends[i]).astype('timedelta64[s]').astype(np.float64) / 60.0
+            tos    = acts[i+1:]
+            frm    = acts[i]
+            for to_act, d in zip(tos, deltas):
+                if pd.notna(d):
+                    rows.append((frm, to_act, float(d)))
+
+    return pd.DataFrame(rows, columns=["from", "to", "delta_min"])
+
+def summarize_intervals(pairs_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    입력: compute_following_intervals() 결과
+    반환: Multi-agg 요약 (from, to)별 통계
+    """
+    if pairs_df.empty:
+        return pd.DataFrame(columns=["from","to","count","mean","median","p90","p95"])
+
+    def q(s, p): 
+        return float(s.quantile(p)) if len(s) else None
+
+    g = pairs_df.groupby(["from", "to"])["delta_min"]
+    summary = g.agg(count="count",
+                    mean="mean",
+                    median="median").reset_index()
+    # p90/p95 추가
+    p90 = g.quantile(0.90).reset_index(name="p90")
+    p95 = g.quantile(0.95).reset_index(name="p95")
+    summary = summary.merge(p90, on=["from","to"], how="left").merge(p95, on=["from","to"], how="left")
+    # float로 통일
+    for c in ("mean","median","p90","p95"):
+        if c in summary.columns:
+            summary[c] = summary[c].astype(float)
+    return summary
 
 def parse_shift_times(form, default_shift_times):
     def to_hour(time_str):
@@ -252,7 +313,7 @@ def reallocate_shift_selection():
         'intern_shift_1': 10, 'intern_shift_2': 10,
         'resident_shift_1': 10, 'resident_shift_2': 10,
         'specialist_shift_1': 14, 'specialist_shift_2': 10,
-        'junior_shift_1': 2, 'junior_shift_2': 5, 'junior_shift_3': 2,
+        'junior_shift_1': 2, 'junior_shift_2': 4, 'junior_shift_3': 2,
         'senior_shift_1': 1, 'senior_shift_2': 2, 'senior_shift_3': 1
     }
     # 기본 인원 수 기준 10% 만큼의 옵션을 제공 (몇 % 로 할지 여기서 수정 가능)
@@ -296,7 +357,7 @@ def reallocate_staff_compare():
         'intern_shift_1': 10, 'intern_shift_2': 10,
         'resident_shift_1': 10, 'resident_shift_2': 10,
         'specialist_shift_1': 14, 'specialist_shift_2': 10,
-        'junior_shift_1': 2, 'junior_shift_2': 5, 'junior_shift_3': 2,
+        'junior_shift_1': 2, 'junior_shift_2': 4, 'junior_shift_3': 2,
         'senior_shift_1': 1, 'senior_shift_2': 2, 'senior_shift_3': 1
     }
 
@@ -358,7 +419,7 @@ def adding_staff_selection():
         'intern_shift_1': 10, 'intern_shift_2': 10,
         'resident_shift_1': 10, 'resident_shift_2': 10,
         'specialist_shift_1': 14, 'specialist_shift_2': 10,
-        'junior_shift_1': 2, 'junior_shift_2': 5, 'junior_shift_3': 2,
+        'junior_shift_1': 2, 'junior_shift_2': 4, 'junior_shift_3': 2,
         'senior_shift_1': 1, 'senior_shift_2': 2, 'senior_shift_3': 1
     }
 
@@ -1016,6 +1077,48 @@ def reduce_lab_boarding():
     return render_template('reducing_lab_boarding.html',
                            activities=sorted(transition_time_map.keys()),
                            transition_time_map=transition_time_map)
+
+@scenario.route('/scenario/following-stats', methods=['GET'])
+def following_stats():
+    from_act = request.args.get("from")
+    # 로그 경로는 하나로 고정해도 OK
+    log_path = "app\data\event_real_log.csv"
+
+    df = pd.read_csv(log_path)
+    if "starttime" in df.columns:
+        df["starttime"] = pd.to_datetime(df["starttime"], errors="coerce")
+
+    pairs = compute_following_intervals_end_to_start(df, "new_activity", "starttime", "endtime","case_id")
+    summary = summarize_intervals(pairs)
+
+    if from_act:
+        sub = summary[summary["from"] == from_act].copy()
+        stats = {
+            row["to"]: {
+                "count":  int(row["count"]),
+                "mean":   float(row["mean"]),
+                "median": float(row["median"]),
+                "p90":    (None if pd.isna(row["p90"]) else float(row["p90"])),
+                "p95":    (None if pd.isna(row["p95"]) else float(row["p95"])),
+            }
+            for _, row in sub.iterrows()
+        }
+        return jsonify({"from": from_act, "stats": stats})
+
+    # 전체 매트릭스가 필요한 경우
+    mat = {}
+    for f_act, g in summary.groupby("from"):
+        mat[f_act] = {
+            row["to"]: {
+                "count":  int(row["count"]),
+                "mean":   float(row["mean"]),
+                "median": float(row["median"]),
+                "p90":    (None if pd.isna(row["p90"]) else float(row["p90"])),
+                "p95":    (None if pd.isna(row["p95"]) else float(row["p95"])),
+            }
+            for _, row in g.iterrows()
+        }
+    return jsonify({"matrix": mat})
 
 @scenario.route('/scenario/submit_reduce_lab_boarding', methods=['POST'])
 def submit_reduce_lab_boarding():
