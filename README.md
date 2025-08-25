@@ -83,3 +83,6 @@ Click the scenario button you want to select
 The Select changeable parameters screen for the selected scenario appears
 
 ### 6. Simulation Results Comparison Table Screen
+The screen when you run adding_staff and remove activity
+
+<img width="1625" height="712" alt="Image" src="https://github.com/user-attachments/assets/121cf2a5-e053-4b34-a561-5211c0af82c9" />
